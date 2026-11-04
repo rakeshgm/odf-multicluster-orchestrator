@@ -3,12 +3,11 @@ package managedcluster
 import (
 	"context"
 	"fmt"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"log/slog"
 
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	viewv1beta1 "github.com/stolostron/multicloud-operators-foundation/pkg/apis/view/v1beta1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -77,7 +76,10 @@ func (r *ManagedClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *ManagedClusterReconciler) processManagedClusterViews(ctx context.Context, managedCluster *clusterv1.ManagedCluster) error {
+func (r *ManagedClusterReconciler) processManagedClusterViews(
+	ctx context.Context,
+	managedCluster *clusterv1.ManagedCluster,
+) error {
 	// Get all storage vendor ConfigMaps for this ManagedCluster
 	vendorConfigMaps := utils.GetAllStorageVendorConfigMaps(managedCluster)
 
@@ -115,7 +117,13 @@ func (r *ManagedClusterReconciler) processManagedClusterViews(ctx context.Contex
 		if err != nil {
 			return fmt.Errorf("failed to create or update ManagedClusterView for %s: %w", claimName, err)
 		}
-		r.Logger.Info(fmt.Sprintf("ManagedClusterView was %s", operationResult), "ManagedClusterView", mcv.Name, "Vendor", claimName)
+		r.Logger.Info(
+			fmt.Sprintf("ManagedClusterView was %s", operationResult),
+			"ManagedClusterView",
+			mcv.Name,
+			"Vendor",
+			claimName,
+		)
 
 		// Cleanup ManagedClusterView for token-exchange-agent deployment (only for ODF)
 		if claimName == utils.OdfInfoClusterClaimNamespacedName {
@@ -130,7 +138,6 @@ func (r *ManagedClusterReconciler) processManagedClusterViews(ctx context.Contex
 
 // cleanupTokenExchangeMCV deletes the tokenexchange MCV
 func (r *ManagedClusterReconciler) cleanupTokenExchangeMCV(ctx context.Context, clusterName string) error {
-
 	// Delete tokenexchange MCV if it exists
 	tokenExchangeMCVName := utils.GetTokenExchangeManagedClusterViewName(clusterName)
 	tokenExchangeMCV := &viewv1beta1.ManagedClusterView{}

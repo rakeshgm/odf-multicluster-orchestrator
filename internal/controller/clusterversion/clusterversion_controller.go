@@ -18,11 +18,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/console"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	configv1 "github.com/openshift/api/config/v1"
 	ocstlsv1 "github.com/red-hat-storage/ocs-tls-profiles/api/v1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/console"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -138,7 +137,15 @@ func (r *ClusterVersionReconciler) resolveTLSConfig(ctx context.Context) *ocstls
 	}
 
 	if err := ocstlsv1.ValidateTLSConfig(cfg); err != nil {
-		r.Logger.Error("Invalid TLS config, falling back to defaults", "domain", utils.TLSProfileDomain, "server", utils.TLSProfileServer, "error", err)
+		r.Logger.Error(
+			"Invalid TLS config, falling back to defaults",
+			"domain",
+			utils.TLSProfileDomain,
+			"server",
+			utils.TLSProfileServer,
+			"error",
+			err,
+		)
 		return nil
 	}
 

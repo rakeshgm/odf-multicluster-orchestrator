@@ -22,7 +22,6 @@ import (
 
 	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	"gopkg.in/yaml.v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -41,7 +40,11 @@ const (
 )
 
 // GetPeerRefForProviderCluster returns the client peer ref for the current provider cluster
-func GetPeerRefForProviderCluster(ctx context.Context, spokeClient, hubClient client.Client, mp *multiclusterv1alpha1.MirrorPeer) ([]multiclusterv1alpha1.PeerRef, error) {
+func GetPeerRefForProviderCluster(
+	ctx context.Context,
+	spokeClient, hubClient client.Client,
+	mp *multiclusterv1alpha1.MirrorPeer,
+) ([]multiclusterv1alpha1.PeerRef, error) {
 	var peerRefList []multiclusterv1alpha1.PeerRef
 	operatorNamespace := utils.GetEnv("POD_NAMESPACE")
 	cm, err := GetODFInfoConfigMap(ctx, spokeClient, operatorNamespace)
@@ -70,7 +73,10 @@ func GetPeerRefForProviderCluster(ctx context.Context, spokeClient, hubClient cl
 }
 
 func getPeerRefType(peerRef multiclusterv1alpha1.PeerRef, clientInfoMap map[string]string) (peerRefType, error) {
-	cInfo, err := GetClientInfoFromConfigMap(clientInfoMap, utils.GetKey(peerRef.ClusterName, peerRef.StorageClusterRef.Name))
+	cInfo, err := GetClientInfoFromConfigMap(
+		clientInfoMap,
+		utils.GetKey(peerRef.ClusterName, peerRef.StorageClusterRef.Name),
+	)
 	if err != nil {
 		return peerRefTypeUnknown, err
 	}

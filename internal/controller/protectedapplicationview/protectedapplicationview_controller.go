@@ -7,11 +7,10 @@ import (
 	"strings"
 	"time"
 
-	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	argov1alpha1 "github.com/argoproj/argo-cd/v3/pkg/apis/application/v1alpha1"
 	ramenv1alpha1 "github.com/ramendr/ramen/api/v1alpha1"
+	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -243,7 +242,8 @@ func (r *ProtectedApplicationViewReconciler) Reconcile(ctx context.Context, req 
 	return r.updatePAVStatus(ctx, pav, drpc, placement, appResult)
 }
 
-// updatePAVStatus updates the status of the ProtectedApplicationView based on the DRPlacementControl and Placement information
+// updatePAVStatus updates the status of the ProtectedApplicationView based on the DRPlacementControl and Placement
+// information
 func (r *ProtectedApplicationViewReconciler) updatePAVStatus(
 	ctx context.Context,
 	pav *multiclusterv1alpha1.ProtectedApplicationView,
@@ -314,7 +314,8 @@ func (r *ProtectedApplicationViewReconciler) updatePAVStatus(
 	return ctrl.Result{}, nil
 }
 
-// findApplicationForDRPC reverse maps the DRPlacementControl to its application (ApplicationSet, Subscription, or Discovered)
+// findApplicationForDRPC reverse maps the DRPlacementControl to its application (ApplicationSet, Subscription, or
+// Discovered)
 func (r *ProtectedApplicationViewReconciler) findApplicationForDRPC(
 	ctx context.Context,
 	drpc *ramenv1alpha1.DRPlacementControl,

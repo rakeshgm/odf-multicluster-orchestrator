@@ -22,11 +22,10 @@ import (
 	"log/slog"
 	"time"
 
+	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/odf"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
-	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -182,7 +181,11 @@ func (r *MirrorPeerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// if mirrorPeer.Status.Phase == multiclusterv1alpha1.ExchangingSecret {
 		// }
 		var token corev1.Secret
-		err = r.HubClient.Get(ctx, types.NamespacedName{Namespace: r.SpokeClusterName, Name: string(mirrorPeer.GetUID())}, &token)
+		err = r.HubClient.Get(
+			ctx,
+			types.NamespacedName{Namespace: r.SpokeClusterName, Name: string(mirrorPeer.GetUID())},
+			&token,
+		)
 		if err != nil && !errors.IsNotFound(err) {
 			return ctrl.Result{}, err
 		}
@@ -195,7 +198,13 @@ func (r *MirrorPeerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 			logger.Info("Successfully unmarshalled onboarding ticket", "ticketData", ticketData)
 			if ticketData.ExpirationDate > time.Now().Unix() {
-				logger.Info("Onboarding token has not expired yet. Not renewing it.", "Token", token.Name, "ExpirationDate", ticketData.ExpirationDate)
+				logger.Info(
+					"Onboarding token has not expired yet. Not renewing it.",
+					"Token",
+					token.Name,
+					"ExpirationDate",
+					ticketData.ExpirationDate,
+				)
 				return ctrl.Result{}, nil
 			}
 			logger.Info("Onboarding token has expired. Deleting it", "Token", token.Name)
@@ -205,7 +214,15 @@ func (r *MirrorPeerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 		}
 		logger.Info("Creating a new onboarding token", "Token", token.Name)
-		err = createStorageClusterPeerTokenSecret(ctx, r.HubClient, r.Scheme, r.SpokeClusterName, r.OdfOperatorNamespace, mirrorPeer, scr)
+		err = createStorageClusterPeerTokenSecret(
+			ctx,
+			r.HubClient,
+			r.Scheme,
+			r.SpokeClusterName,
+			r.OdfOperatorNamespace,
+			mirrorPeer,
+			scr,
+		)
 		if err != nil {
 			logger.Error("Failed to create StorageCluster peer token on the hub.", "error", err)
 			return ctrl.Result{}, err
@@ -275,7 +292,10 @@ func (r *MirrorPeerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func getCurrentStorageClusterRef(mp *multiclusterv1alpha1.MirrorPeer, spokeClusterName string) (*multiclusterv1alpha1.StorageClusterRef, error) {
+func getCurrentStorageClusterRef(
+	mp *multiclusterv1alpha1.MirrorPeer,
+	spokeClusterName string,
+) (*multiclusterv1alpha1.StorageClusterRef, error) {
 	for _, v := range mp.Spec.Items {
 		if v.ClusterName == spokeClusterName {
 			return &v.StorageClusterRef, nil
@@ -285,7 +305,11 @@ func getCurrentStorageClusterRef(mp *multiclusterv1alpha1.MirrorPeer, spokeClust
 	return nil, fmt.Errorf("StorageClusterRef for cluster %s under mirrorpeer %s not found", spokeClusterName, mp.Name)
 }
 
-func getStorageClusterFromCurrentNamespace(ctx context.Context, c client.Client, namespace string) (*ocsv1.StorageCluster, error) {
+func getStorageClusterFromCurrentNamespace(
+	ctx context.Context,
+	c client.Client,
+	namespace string,
+) (*ocsv1.StorageCluster, error) {
 	storageClusterList := &ocsv1.StorageClusterList{}
 	listOptions := []client.ListOption{
 		client.InNamespace(namespace),

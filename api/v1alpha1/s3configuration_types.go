@@ -88,12 +88,17 @@ type ExternalS3Spec struct {
 }
 
 // S3ConfigurationSpec defines the desired state of S3Configuration
-// +kubebuilder:validation:XValidation:rule="(has(self.internalS3) && !has(self.externalS3)) || (!has(self.internalS3) && has(self.externalS3))",message="must specify exactly one of internalS3 or externalS3"
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.internalS3) || has(self.internalS3)",message="cannot change from internalS3 to externalS3"
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.externalS3) || has(self.externalS3)",message="cannot change from externalS3 to internalS3"
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.internalS3) || !has(self.internalS3) || self.internalS3 == oldSelf.internalS3",message="internalS3 configuration is immutable"
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.externalS3) || !has(self.externalS3) || self.externalS3 == oldSelf.externalS3",message="externalS3 configuration is immutable"
-// +kubebuilder:validation:XValidation:rule="self.managedClusters == oldSelf.managedClusters",message="managedClusters is immutable"
+// +kubebuilder:validation:XValidation:rule="(has(self.internalS3) && !has(self.externalS3)) || (!has(self.internalS3)
+// && has(self.externalS3))",message="must specify exactly one of internalS3 or externalS3"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.internalS3) || has(self.internalS3)",message="cannot change
+// from internalS3 to externalS3" +kubebuilder:validation:XValidation:rule="!has(oldSelf.externalS3) ||
+// has(self.externalS3)",message="cannot change from externalS3 to internalS3"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.internalS3) || !has(self.internalS3) || self.internalS3 ==
+// oldSelf.internalS3",message="internalS3 configuration is immutable"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.externalS3) || !has(self.externalS3) || self.externalS3 ==
+// oldSelf.externalS3",message="externalS3 configuration is immutable"
+// +kubebuilder:validation:XValidation:rule="self.managedClusters == oldSelf.managedClusters",message="managedClusters
+// is immutable"
 type S3ConfigurationSpec struct {
 	// InternalS3 specifies configuration for ODF-managed internal S3 (Noobaa/RGW).
 	// When specified, the S3Configuration controller will:

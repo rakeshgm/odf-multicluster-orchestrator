@@ -5,13 +5,12 @@ import (
 	"log/slog"
 	"os"
 
-	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/version"
-
 	"github.com/go-logr/zapr"
 	obv1alpha1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	routev1 "github.com/openshift/api/route/v1"
+	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/version"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,9 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
-var (
-	mgrScheme = runtime.NewScheme()
-)
+var mgrScheme = runtime.NewScheme()
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(mgrScheme))
@@ -71,10 +68,20 @@ func (o *S3ConfigAddonOptions) AddFlags(cmd *cobra.Command) {
 	flags.StringVar(&o.ProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flags.BoolVar(&o.EnableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager.")
-	flags.StringVar(&o.HubKubeconfigFile, "hub-kubeconfig", o.HubKubeconfigFile, "Location of kubeconfig file to connect to hub cluster.")
+	flags.StringVar(
+		&o.HubKubeconfigFile,
+		"hub-kubeconfig",
+		o.HubKubeconfigFile,
+		"Location of kubeconfig file to connect to hub cluster.",
+	)
 	flags.StringVar(&o.KubeconfigFile, "kubeconfig", "", "Paths to a kubeconfig. Only required if out-of-cluster.")
 	flags.StringVar(&o.SpokeClusterName, "cluster-name", o.SpokeClusterName, "Name of spoke cluster.")
-	flags.StringVar(&o.InstallNamespace, "install-namespace", "openshift-storage", "Namespace where the addon is installed and where to watch resources.")
+	flags.StringVar(
+		&o.InstallNamespace,
+		"install-namespace",
+		"openshift-storage",
+		"Namespace where the addon is installed and where to watch resources.",
+	)
 	flags.BoolVar(&o.DevMode, "dev", false, "Set to true for dev environment (Text logging)")
 }
 
@@ -118,7 +125,6 @@ func runSpokeManager(ctx context.Context, options S3ConfigAddonOptions, logger *
 			},
 		},
 	})
-
 	if err != nil {
 		logger.Error("Failed to start manager", "error", err)
 		os.Exit(1)

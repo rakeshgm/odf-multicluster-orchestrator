@@ -136,7 +136,9 @@ type MirrorPeerSpec struct {
 	// Items is a list of PeerRef.
 	// +kubebuilder:validation:MaxItems=2
 	// +kubebuilder:validation:MinItems=2
-	// +kubebuilder:validation:XValidation:rule="self.all(e, (size(oldSelf.filter(x, (x.clusterName == e.clusterName) && (x.storageClusterRef.name == e.storageClusterRef.name) )) == 1))",message="items.clusterName and items.storageClusterRef.name fields are immutable."
+	// +kubebuilder:validation:XValidation:rule="self.all(e, (size(oldSelf.filter(x, (x.clusterName == e.clusterName) &&
+	// (x.storageClusterRef.name == e.storageClusterRef.name) )) == 1))",message="items.clusterName and
+	// items.storageClusterRef.name fields are immutable."
 	// +listType=map
 	// +listMapKey=clusterName
 	Items []PeerRef `json:"items"`

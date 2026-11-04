@@ -71,7 +71,11 @@ func TestEnsureConsolePlugin(t *testing.T) {
 		expectedBasePath string
 	}{
 		{"OCP 4.21 sets main base path", "4.21.3", console.MAIN_BASE_PATH},
-		{"OCP 4.23 nightly sets compatibility base path", "4.23.0-0.nightly-2026-06-14-141125", console.COMPATIBILITY_BASE_PATH},
+		{
+			"OCP 4.23 nightly sets compatibility base path",
+			"4.23.0-0.nightly-2026-06-14-141125",
+			console.COMPATIBILITY_BASE_PATH,
+		},
 		{"OCP 5.0 sets compatibility base path", "5.0.1", console.COMPATIBILITY_BASE_PATH},
 	}
 

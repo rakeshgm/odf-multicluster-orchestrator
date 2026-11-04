@@ -20,7 +20,6 @@ import (
 	"context"
 
 	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 

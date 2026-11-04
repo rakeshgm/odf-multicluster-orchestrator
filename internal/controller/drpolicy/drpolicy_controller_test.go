@@ -95,7 +95,10 @@ func TestDRPolicyReconcile(t *testing.T) {
 
 }
 
-func getFakeDRPolicyReconciler(drpolicy *ramenv1alpha1.DRPolicy, mp *multiclusterv1alpha1.MirrorPeer) DRPolicyReconciler {
+func getFakeDRPolicyReconciler(
+	drpolicy *ramenv1alpha1.DRPolicy,
+	mp *multiclusterv1alpha1.MirrorPeer,
+) DRPolicyReconciler {
 	scheme := mgrScheme
 	os.Setenv("POD_NAMESPACE", "openshift-operators")
 	os.Setenv("ADDON_IMAGE", "quay.io/ocs-dev/mco:test")
@@ -234,7 +237,10 @@ func getFakeDRPolicyReconciler(drpolicy *ramenv1alpha1.DRPolicy, mp *multicluste
 		},
 	}
 
-	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(drpolicy, mp, ns1, ns2, odfClientInfoConfigMap, tokenExchangeMCV1, tokenExchangeMCV2).Build()
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(drpolicy, mp, ns1, ns2, odfClientInfoConfigMap, tokenExchangeMCV1, tokenExchangeMCV2).
+		Build()
 
 	r := DRPolicyReconciler{
 		HubClient:        fakeClient,

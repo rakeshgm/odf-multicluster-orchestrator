@@ -129,7 +129,10 @@ func TestPAVReconcile_Subscription(t *testing.T) {
 	}
 
 	if len(updatedPAV.Status.ApplicationInfo.SubscriptionInfo.SubscriptionRefs) != 1 {
-		t.Errorf("Expected 1 subscription ref, got %d", len(updatedPAV.Status.ApplicationInfo.SubscriptionInfo.SubscriptionRefs))
+		t.Errorf(
+			"Expected 1 subscription ref, got %d",
+			len(updatedPAV.Status.ApplicationInfo.SubscriptionInfo.SubscriptionRefs),
+		)
 	}
 
 	if updatedPAV.Status.DRInfo.DRPolicyRef.Name != pavTestDRPolicyName {
@@ -230,7 +233,10 @@ func TestPAVReconcile_SubscriptionNoParentApp(t *testing.T) {
 	}
 
 	if len(updatedPAV.Status.ApplicationInfo.SubscriptionInfo.SubscriptionRefs) != 1 {
-		t.Errorf("Expected 1 subscription ref, got %d", len(updatedPAV.Status.ApplicationInfo.SubscriptionInfo.SubscriptionRefs))
+		t.Errorf(
+			"Expected 1 subscription ref, got %d",
+			len(updatedPAV.Status.ApplicationInfo.SubscriptionInfo.SubscriptionRefs),
+		)
 	}
 }
 

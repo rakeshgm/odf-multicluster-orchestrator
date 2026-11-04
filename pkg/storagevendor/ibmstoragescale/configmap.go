@@ -17,6 +17,7 @@ limitations under the License.
 package ibmstoragescale
 
 const (
-	// IbmStorageScaleConfigMapName is the name of the ConfigMap on the hub that stores IBM Storage Scale cluster information
+	// IbmStorageScaleConfigMapName is the name of the ConfigMap on the hub that stores IBM Storage Scale cluster
+	// information
 	IbmStorageScaleConfigMapName = "ibm-storage-scale-info"
 )

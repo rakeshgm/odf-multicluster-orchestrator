@@ -11,7 +11,6 @@ import (
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/ibmstoragescale"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/odf"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	viewv1beta1 "github.com/stolostron/multicloud-operators-foundation/pkg/apis/view/v1beta1"
 	yamlv3 "gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
@@ -84,7 +83,10 @@ func (r *ManagedClusterViewReconciler) SetupWithManager(mgr ctrl.Manager) error 
 }
 
 // configMapToManagedClusterViews maps a ConfigMap event to reconcile requests for all relevant ManagedClusterViews
-func (r *ManagedClusterViewReconciler) configMapToManagedClusterViews(ctx context.Context, obj client.Object) []reconcile.Request {
+func (r *ManagedClusterViewReconciler) configMapToManagedClusterViews(
+	ctx context.Context,
+	obj client.Object,
+) []reconcile.Request {
 	cm, ok := obj.(*corev1.ConfigMap)
 	if !ok {
 		return nil
@@ -174,7 +176,12 @@ func (r *ManagedClusterViewReconciler) Reconcile(ctx context.Context, req reconc
 	return ctrl.Result{}, nil
 }
 
-func (r *ManagedClusterViewReconciler) getOdfInfoMap(ctx context.Context, managedClusterName string, data map[string]interface{}, vendorInfo map[string]string) error {
+func (r *ManagedClusterViewReconciler) getOdfInfoMap(
+	ctx context.Context,
+	managedClusterName string,
+	data map[string]interface{},
+	vendorInfo map[string]string,
+) error {
 	for key, value := range data {
 		if !strings.Contains(key, ".yaml") {
 			continue
@@ -235,7 +242,9 @@ func (r *ManagedClusterViewReconciler) getOdfInfoMap(ctx context.Context, manage
 				return fmt.Errorf("failed to marshal client info for key %s: %w", key, err)
 			}
 
-			vendorInfo[utils.GetKey(managedClusterName, odfInfo.StorageCluster.NamespacedName.Name)] = string(clientInfoJSON)
+			vendorInfo[utils.GetKey(managedClusterName, odfInfo.StorageCluster.NamespacedName.Name)] = string(
+				clientInfoJSON,
+			)
 		} else {
 			for _, client := range odfInfo.Clients {
 				managedCluster, err := utils.GetManagedClusterById(ctx, r.Client, client.ClusterID)
@@ -262,7 +271,11 @@ func (r *ManagedClusterViewReconciler) getOdfInfoMap(ctx context.Context, manage
 	return nil
 }
 
-func (r *ManagedClusterViewReconciler) getIbmScaleInfoMap(managedClusterName string, data map[string]interface{}, vendorInfoMap map[string]string) error {
+func (r *ManagedClusterViewReconciler) getIbmScaleInfoMap(
+	managedClusterName string,
+	data map[string]interface{},
+	vendorInfoMap map[string]string,
+) error {
 	for key, value := range data {
 		if !strings.Contains(key, ".yaml") {
 			continue
@@ -293,7 +306,11 @@ func (r *ManagedClusterViewReconciler) getIbmScaleInfoMap(managedClusterName str
 	return nil
 }
 
-func (r *ManagedClusterViewReconciler) createOrUpdateConfigMap(ctx context.Context, logger *slog.Logger, managedClusterView viewv1beta1.ManagedClusterView) error {
+func (r *ManagedClusterViewReconciler) createOrUpdateConfigMap(
+	ctx context.Context,
+	logger *slog.Logger,
+	managedClusterView viewv1beta1.ManagedClusterView,
+) error {
 	// The MCV namespace is the same as the ManagedCluster name
 	managedCluster := &clusterv1.ManagedCluster{}
 	managedCluster.Name = managedClusterView.Namespace
@@ -335,12 +352,12 @@ func (r *ManagedClusterViewReconciler) createOrUpdateConfigMap(ctx context.Conte
 	configMap.Name = configMapName
 	configMap.Namespace = r.CurrentNamespace
 
-	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(configMap), configMap); err != nil && !errors.IsNotFound(err) {
+	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(configMap), configMap); err != nil &&
+		!errors.IsNotFound(err) {
 		return fmt.Errorf("failed to get ConfigMap: %w", err)
 	}
 
 	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, configMap, func() error {
-
 		utils.AddLabel(configMap, utils.HubRecoveryLabel, "")
 
 		// Add ManagedCluster as a non-controller owner for garbage collection
@@ -358,7 +375,6 @@ func (r *ManagedClusterViewReconciler) createOrUpdateConfigMap(ctx context.Conte
 		}
 		return nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to create or update ConfigMap: %w", err)
 	}

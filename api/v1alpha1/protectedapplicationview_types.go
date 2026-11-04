@@ -82,7 +82,8 @@ type ApplicationInfo struct {
 	// +kubebuilder:validation:Enum=ApplicationSet;Subscription;Discovered
 	Type ApplicationType `json:"type"`
 
-	// ApplicationRef references the source application resource, ApplicationSet will refer to ArgoCD ApplicationSet, Subscription will refer to K8s Application
+	// ApplicationRef references the source application resource, ApplicationSet will refer to ArgoCD ApplicationSet,
+	// Subscription will refer to K8s Application
 	// +optional
 	ApplicationRef corev1.ObjectReference `json:"applicationRef"`
 

@@ -21,11 +21,10 @@ import (
 	"fmt"
 	"log/slog"
 
+	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/version"
-
-	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -34,7 +33,10 @@ import (
 )
 
 func isVersionCompatible(peerRef multiclusterv1alpha1.PeerRef, clientInfoMap map[string]string) error {
-	clientInfo, err := GetClientInfoFromConfigMap(clientInfoMap, utils.GetKey(peerRef.ClusterName, peerRef.StorageClusterRef.Name))
+	clientInfo, err := GetClientInfoFromConfigMap(
+		clientInfoMap,
+		utils.GetKey(peerRef.ClusterName, peerRef.StorageClusterRef.Name),
+	)
 	if err != nil {
 		return fmt.Errorf("unable to get client info: error: %v", err)
 	}
@@ -43,26 +45,57 @@ func isVersionCompatible(peerRef multiclusterv1alpha1.PeerRef, clientInfoMap map
 		return fmt.Errorf("unable to parse versions: error: %v", err)
 	}
 	if !eq {
-		return fmt.Errorf("StorageCluster version %q on ManagedCluster %q is incompatible with Multicluster Orchestrator version %q", clientInfo.ProviderInfo.Version, peerRef.ClusterName, version.Version)
+		return fmt.Errorf(
+			"StorageCluster version %q on ManagedCluster %q is incompatible with Multicluster Orchestrator version %q",
+			clientInfo.ProviderInfo.Version,
+			peerRef.ClusterName,
+			version.Version,
+		)
 	}
 	return nil
 }
 
-func isProviderModePeeringDone(ctx context.Context, client client.Client, logger *slog.Logger, mirrorPeer *multiclusterv1alpha1.MirrorPeer, clientInfoMap map[string]string) (bool, error) {
-	isStorageClusterPeerManifestWorkCreated, err := checkStorageClusterPeerStatus(ctx, client, logger, mirrorPeer, clientInfoMap)
+func isProviderModePeeringDone(
+	ctx context.Context,
+	client client.Client,
+	logger *slog.Logger,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+	clientInfoMap map[string]string,
+) (bool, error) {
+	isStorageClusterPeerManifestWorkCreated, err := checkStorageClusterPeerStatus(
+		ctx,
+		client,
+		logger,
+		mirrorPeer,
+		clientInfoMap,
+	)
 	if err != nil {
 		logger.Error("failed to check StorageClusterPeer status", "error", err)
 		return false, err
 	}
 
-	logger.Info("StorageClusterPeer manifest work creation status", "isStorageClusterPeerManifestWorkCreated", isStorageClusterPeerManifestWorkCreated)
-	isClientPairingConfigMapCreated, err := checkClientPairingConfigMapStatus(ctx, client, logger, mirrorPeer, clientInfoMap)
+	logger.Info(
+		"StorageClusterPeer manifest work creation status",
+		"isStorageClusterPeerManifestWorkCreated",
+		isStorageClusterPeerManifestWorkCreated,
+	)
+	isClientPairingConfigMapCreated, err := checkClientPairingConfigMapStatus(
+		ctx,
+		client,
+		logger,
+		mirrorPeer,
+		clientInfoMap,
+	)
 	if err != nil {
 		logger.Error("failed to check if client pair config map has been created")
 		return false, err
 	}
 
-	logger.Info("client pairing ConfigMap creation status", "isClientPairingConfigMapCreated", isClientPairingConfigMapCreated)
+	logger.Info(
+		"client pairing ConfigMap creation status",
+		"isClientPairingConfigMapCreated",
+		isClientPairingConfigMapCreated,
+	)
 
 	allChecksPassed := isStorageClusterPeerManifestWorkCreated &&
 		isClientPairingConfigMapCreated
@@ -73,7 +106,13 @@ func isProviderModePeeringDone(ctx context.Context, client client.Client, logger
 
 // checkStorageClusterPeerStatus checks if the ManifestWorks for StorageClusterPeer resources
 // have been created and reached the Applied status.
-func checkStorageClusterPeerStatus(ctx context.Context, client client.Client, logger *slog.Logger, mirrorPeer *multiclusterv1alpha1.MirrorPeer, clientInfoMap map[string]string) (bool, error) {
+func checkStorageClusterPeerStatus(
+	ctx context.Context,
+	client client.Client,
+	logger *slog.Logger,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+	clientInfoMap map[string]string,
+) (bool, error) {
 	logger.Info("Checking if StorageClusterPeer ManifestWorks have been created and reached Peered status")
 
 	// Collect client information for each cluster in the MirrorPeer
@@ -97,10 +136,18 @@ func checkStorageClusterPeerStatus(ctx context.Context, client client.Client, lo
 
 		// Fetch the ManifestWork
 		manifestWork := &workv1.ManifestWork{}
-		err := client.Get(ctx, types.NamespacedName{Name: manifestWorkName, Namespace: manifestWorkNamespace}, manifestWork)
+		err := client.Get(
+			ctx,
+			types.NamespacedName{Name: manifestWorkName, Namespace: manifestWorkNamespace},
+			manifestWork,
+		)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
-				logger.Info("ManifestWork for StorageClusterPeer not found; it may not be created yet", "ManifestWorkName", manifestWorkName)
+				logger.Info(
+					"ManifestWork for StorageClusterPeer not found; it may not be created yet",
+					"ManifestWorkName",
+					manifestWorkName,
+				)
 				return false, nil
 			}
 			return false, fmt.Errorf("failed to get ManifestWork for StorageClusterPeer: %w", err)
@@ -116,7 +163,11 @@ func checkStorageClusterPeerStatus(ctx context.Context, client client.Client, lo
 		}
 
 		if !applied {
-			logger.Info("StorageClusterPeer ManifestWork has not reached Applied status", "ManifestWorkName", manifestWorkName)
+			logger.Info(
+				"StorageClusterPeer ManifestWork has not reached Applied status",
+				"ManifestWorkName",
+				manifestWorkName,
+			)
 			return false, nil
 		}
 		logger.Info("StorageClusterPeer ManifestWork has reached Applied status", "ManifestWorkName", manifestWorkName)
@@ -131,7 +182,9 @@ func checkStorageClusterPeerStatus(ctx context.Context, client client.Client, lo
 		}
 
 		if peerManifestStatus != nil && len(peerManifestStatus.StatusFeedbacks.Values) > 0 {
-			if *peerManifestStatus.StatusFeedbacks.Values[0].Value.String == string(ocsv1.StorageClusterPeerStateFailed) {
+			if *peerManifestStatus.StatusFeedbacks.Values[0].Value.String == string(
+				ocsv1.StorageClusterPeerStateFailed,
+			) {
 				logger.Error("StorageClusterPeer is in Failed status", "ManifestWorkName", manifestWorkName)
 				return false, fmt.Errorf("StorageClusterPeer %s is in Failed status", manifestWorkName)
 			} else if *peerManifestStatus.StatusFeedbacks.Values[0].Value.String != string(ocsv1.StorageClusterPeerStatePeered) {
@@ -152,7 +205,13 @@ func checkStorageClusterPeerStatus(ctx context.Context, client client.Client, lo
 
 // checkClientPairingConfigMapStatus checks if the ManifestWorks for client pairing ConfigMaps
 // have been created and reached the Applied status.
-func checkClientPairingConfigMapStatus(ctx context.Context, client client.Client, logger *slog.Logger, mirrorPeer *multiclusterv1alpha1.MirrorPeer, clientInfoMap map[string]string) (bool, error) {
+func checkClientPairingConfigMapStatus(
+	ctx context.Context,
+	client client.Client,
+	logger *slog.Logger,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+	clientInfoMap map[string]string,
+) (bool, error) {
 	logger.Info("Checking if client pairing ConfigMap ManifestWorks have been created and reached Applied status")
 
 	// Collect client information for each cluster in the MirrorPeer
@@ -175,7 +234,11 @@ func checkClientPairingConfigMapStatus(ctx context.Context, client client.Client
 
 		// Fetch the ManifestWork
 		manifestWork := &workv1.ManifestWork{}
-		err := client.Get(ctx, types.NamespacedName{Name: manifestWorkName, Namespace: manifestWorkNamespace}, manifestWork)
+		err := client.Get(
+			ctx,
+			types.NamespacedName{Name: manifestWorkName, Namespace: manifestWorkNamespace},
+			manifestWork,
+		)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				logger.Info("ManifestWork for client pairing ConfigMap not found; it may not be created yet",

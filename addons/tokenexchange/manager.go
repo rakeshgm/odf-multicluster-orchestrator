@@ -6,11 +6,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
-
-	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/version"
 
 	replicationv1alpha1 "github.com/csi-addons/kubernetes-csi-addons/api/replication.storage/v1alpha1"
 	"github.com/go-logr/zapr"
@@ -21,6 +16,9 @@ import (
 	ramenv1alpha1 "github.com/ramendr/ramen/api/v1alpha1"
 	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	ocsv1alpha1 "github.com/red-hat-storage/ocs-operator/api/v4/v1alpha1"
+	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/version"
 	rookv1 "github.com/rook/rook/pkg/apis/ceph.rook.io/v1"
 	"github.com/spf13/cobra"
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,13 +38,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
-var (
-	mgrScheme = runtime.NewScheme()
-)
+var mgrScheme = runtime.NewScheme()
 
 func init() {
 	utilruntime.Must(ramenv1alpha1.AddToScheme(mgrScheme))
@@ -106,10 +103,20 @@ func (o *AddonAgentOptions) AddFlags(cmd *cobra.Command) {
 	flags.BoolVar(&o.EnableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flags.StringVar(&o.HubKubeconfigFile, "hub-kubeconfig", o.HubKubeconfigFile, "Location of kubeconfig file to connect to hub cluster.")
+	flags.StringVar(
+		&o.HubKubeconfigFile,
+		"hub-kubeconfig",
+		o.HubKubeconfigFile,
+		"Location of kubeconfig file to connect to hub cluster.",
+	)
 	flags.StringVar(&o.KubeconfigFile, "kubeconfig", "", "Paths to a kubeconfig. Only required if out-of-cluster.")
 	flags.StringVar(&o.SpokeClusterName, "cluster-name", o.SpokeClusterName, "Name of spoke cluster.")
-	flags.StringVar(&o.OdfOperatorNamespace, "odf-operator-namespace", o.OdfOperatorNamespace, "Namespace of DF operator on the spoke cluster.")
+	flags.StringVar(
+		&o.OdfOperatorNamespace,
+		"odf-operator-namespace",
+		o.OdfOperatorNamespace,
+		"Namespace of DF operator on the spoke cluster.",
+	)
 	flags.BoolVar(&o.DevMode, "dev", false, "Set to true for dev environment (Text logging)")
 	flags.StringVar(&o.testEnvFile, "test-dotenv", "", "Path to a dotenv file for testing purpose only.")
 }
@@ -231,7 +238,6 @@ func runSpokeManager(ctx context.Context, options AddonAgentOptions, logger *slo
 		HealthProbeBindAddress: "0", // disable health probe
 		ReadinessEndpointName:  "0", // disable readiness probe
 	})
-
 	if err != nil {
 		logger.Error("Failed to start manager", "error", err)
 		os.Exit(1)
@@ -278,7 +284,13 @@ func runSpokeManager(ctx context.Context, options AddonAgentOptions, logger *slo
 		Logger:           logger.With("controller", "ResourceDistributionReconciler"),
 		CurrentNamespace: currentNamespace,
 	}).SetupWithManager(mgr); err != nil {
-		logger.Error("Failed to create ResourceDistributionReconciler controller", "controller", "ResourceDistributionReconciler", "error", err)
+		logger.Error(
+			"Failed to create ResourceDistributionReconciler controller",
+			"controller",
+			"ResourceDistributionReconciler",
+			"error",
+			err,
+		)
 		os.Exit(1)
 	}
 
@@ -288,7 +300,9 @@ func runSpokeManager(ctx context.Context, options AddonAgentOptions, logger *slo
 			Namespace: currentNamespace,
 		},
 	}
-	_, err = spokeKubeClient.CoreV1().ConfigMaps(currentNamespace).Create(ctx, &addonDeletionLock, metav1.CreateOptions{})
+	_, err = spokeKubeClient.CoreV1().
+		ConfigMaps(currentNamespace).
+		Create(ctx, &addonDeletionLock, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		logger.Error("Error occurred when creating addon deletion lock", "error", err)
 		os.Exit(1)
@@ -302,7 +316,12 @@ func runSpokeManager(ctx context.Context, options AddonAgentOptions, logger *slo
 }
 
 // ServeHealthProbes starts a server to check healthz and readyz probes
-func ServeHealthProbes(stop <-chan struct{}, healthProbeBindAddress string, configCheck healthz.Checker, logger *slog.Logger) {
+func ServeHealthProbes(
+	stop <-chan struct{},
+	healthProbeBindAddress string,
+	configCheck healthz.Checker,
+	logger *slog.Logger,
+) {
 	healthzHandler := &healthz.Handler{Checks: map[string]healthz.Checker{
 		"healthz-ping": healthz.Ping,
 		"configz-ping": configCheck,

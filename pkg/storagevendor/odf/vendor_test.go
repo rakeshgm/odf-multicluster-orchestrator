@@ -56,7 +56,10 @@ func makeClientInfoJSON(clientID, providerManagedCluster, namespace string) stri
 	return string(b)
 }
 
-func makeManagedClusterAddOn(mp *multiclusterv1alpha1.MirrorPeer, namespace string) *addonapiv1alpha1.ManagedClusterAddOn {
+func makeManagedClusterAddOn(
+	mp *multiclusterv1alpha1.MirrorPeer,
+	namespace string,
+) *addonapiv1alpha1.ManagedClusterAddOn {
 	addon := &addonapiv1alpha1.ManagedClusterAddOn{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      utils.TokenExchangeName,
@@ -196,7 +199,13 @@ func TestProcessManagedClusterAddons(t *testing.T) {
 		WithStatusSubresource(mirrorpeer).
 		Build()
 
-	vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+	vendor, err := NewODFVendor(
+		ctx,
+		fakeClient,
+		scheme,
+		utils.GetLogger(utils.GetZapLogger(true)),
+		utils.GetEnv("POD_NAMESPACE"),
+	)
 	if err != nil {
 		t.Fatalf("Failed to create ODF vendor: %v", err)
 	}
@@ -245,8 +254,14 @@ func TestRemoveClientIDFromClusterPairingConfigMap(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-mirrorpeer"},
 		Spec: multiclusterv1alpha1.MirrorPeerSpec{
 			Items: []multiclusterv1alpha1.PeerRef{
-				{ClusterName: "cluster1", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"}},
-				{ClusterName: "cluster2", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"}},
+				{
+					ClusterName:       "cluster1",
+					StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"},
+				},
+				{
+					ClusterName:       "cluster2",
+					StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"},
+				},
 			},
 		},
 	}
@@ -266,7 +281,13 @@ func TestRemoveClientIDFromClusterPairingConfigMap(t *testing.T) {
 			WithObjects(mw1, mw2, odfClientInfoConfigMap).
 			Build()
 
-		vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}
@@ -310,7 +331,13 @@ func TestRemoveClientIDFromClusterPairingConfigMap(t *testing.T) {
 			WithObjects(odfClientInfoConfigMap).
 			Build()
 
-		vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}
@@ -334,7 +361,13 @@ func TestRemoveClientIDFromClusterPairingConfigMap(t *testing.T) {
 			WithObjects(emptyMW, odfClientInfoConfigMap).
 			Build()
 
-		vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}
@@ -354,7 +387,13 @@ func TestRemoveClientIDFromClusterPairingConfigMap(t *testing.T) {
 			WithObjects(odfClientInfoConfigMap).
 			Build()
 
-		vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}
@@ -381,8 +420,14 @@ func TestDeleteManagedClusterAddon(t *testing.T) {
 		Spec: multiclusterv1alpha1.MirrorPeerSpec{
 			Type: multiclusterv1alpha1.Async,
 			Items: []multiclusterv1alpha1.PeerRef{
-				{ClusterName: "cluster1", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"}},
-				{ClusterName: "cluster2", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"}},
+				{
+					ClusterName:       "cluster1",
+					StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"},
+				},
+				{
+					ClusterName:       "cluster2",
+					StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"},
+				},
 			},
 		},
 	}
@@ -397,7 +442,13 @@ func TestDeleteManagedClusterAddon(t *testing.T) {
 			WithObjects(addon1, addon2, odfClientInfoConfigMap).
 			Build()
 
-		vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}
@@ -423,8 +474,20 @@ func TestConfigureStorageForDR(t *testing.T) {
 			Spec: multiclusterv1alpha1.MirrorPeerSpec{
 				Type: multiclusterv1alpha1.Sync,
 				Items: []multiclusterv1alpha1.PeerRef{
-					{ClusterName: "cluster1", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster", Namespace: "test-namespace"}},
-					{ClusterName: "cluster2", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster", Namespace: "test-namespace"}},
+					{
+						ClusterName: "cluster1",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{
+							Name:      "test-storagecluster",
+							Namespace: "test-namespace",
+						},
+					},
+					{
+						ClusterName: "cluster2",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{
+							Name:      "test-storagecluster",
+							Namespace: "test-namespace",
+						},
+					},
 				},
 			},
 		}
@@ -444,7 +507,13 @@ func TestConfigureStorageForDR(t *testing.T) {
 			WithStatusSubresource(mirrorPeer).
 			Build()
 
-		vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}
@@ -497,8 +566,14 @@ func TestCleanupResources(t *testing.T) {
 			Spec: multiclusterv1alpha1.MirrorPeerSpec{
 				Type: multiclusterv1alpha1.Async,
 				Items: []multiclusterv1alpha1.PeerRef{
-					{ClusterName: "cluster1", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"}},
-					{ClusterName: "cluster2", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"}},
+					{
+						ClusterName:       "cluster1",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"},
+					},
+					{
+						ClusterName:       "cluster2",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster"},
+					},
 				},
 			},
 		}
@@ -519,7 +594,13 @@ func TestCleanupResources(t *testing.T) {
 			WithObjects(mw1, mw2, addon1, addon2, odfClientInfoConfigMap).
 			Build()
 
-		vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}
@@ -544,8 +625,20 @@ func TestCleanupResources(t *testing.T) {
 			Spec: multiclusterv1alpha1.MirrorPeerSpec{
 				Type: multiclusterv1alpha1.Sync,
 				Items: []multiclusterv1alpha1.PeerRef{
-					{ClusterName: "cluster1", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster", Namespace: "test-namespace"}},
-					{ClusterName: "cluster2", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster", Namespace: "test-namespace"}},
+					{
+						ClusterName: "cluster1",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{
+							Name:      "test-storagecluster",
+							Namespace: "test-namespace",
+						},
+					},
+					{
+						ClusterName: "cluster2",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{
+							Name:      "test-storagecluster",
+							Namespace: "test-namespace",
+						},
+					},
 				},
 			},
 		}
@@ -562,12 +655,19 @@ func TestCleanupResources(t *testing.T) {
 			WithStatusSubresource(mirrorPeer).
 			Build()
 
-		vendor, err := NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}
 
-		// CleanupResources for sync type should skip async-specific cleanup like removeClientIDFromClusterPairingConfigMap,
+		// CleanupResources for sync type should skip async-specific cleanup like
+		// removeClientIDFromClusterPairingConfigMap,
 		// ManagedClusterAddons (which don't exist in this test, simulating they're already cleaned up)
 		result, err := vendor.CleanupResources(ctx, mirrorPeer)
 
@@ -621,8 +721,14 @@ func TestCreateStorageClusterPeerIncludesTLSManifests(t *testing.T) {
 	peer := &multiclusterv1alpha1.MirrorPeer{
 		ObjectMeta: metav1.ObjectMeta{Name: "mirror-peer", UID: mirrorPeerUID},
 		Spec: multiclusterv1alpha1.MirrorPeerSpec{Items: []multiclusterv1alpha1.PeerRef{
-			{ClusterName: "cluster-a", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "storagecluster"}},
-			{ClusterName: "cluster-b", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "storagecluster"}},
+			{
+				ClusterName:       "cluster-a",
+				StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "storagecluster"},
+			},
+			{
+				ClusterName:       "cluster-b",
+				StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "storagecluster"},
+			},
 		}},
 	}
 	clientInfoMap := map[string]string{
@@ -630,9 +736,16 @@ func TestCreateStorageClusterPeerIncludesTLSManifests(t *testing.T) {
 		"cluster-b_storagecluster": marshalClientInfo(sideB),
 	}
 	fakeClient := fake.NewClientBuilder().WithScheme(mgrScheme).WithObjects(
-		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: string(mirrorPeerUID), Namespace: "side-a"}, Data: map[string][]byte{utils.SecretDataKey: []byte("side-a-token")}},
-		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: string(mirrorPeerUID), Namespace: "side-b"}, Data: map[string][]byte{utils.SecretDataKey: []byte("side-b-token")}},
-	).Build()
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: string(mirrorPeerUID), Namespace: "side-a"},
+			Data:       map[string][]byte{utils.SecretDataKey: []byte("side-a-token")},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: string(mirrorPeerUID), Namespace: "side-b"},
+			Data:       map[string][]byte{utils.SecretDataKey: []byte("side-b-token")},
+		},
+	).
+		Build()
 
 	if err := createStorageClusterPeer(ctx, fakeClient, utils.GetLogger(utils.GetZapLogger(true)), peer, clientInfoMap); err != nil {
 		t.Fatalf("createStorageClusterPeer returned an error: %v", err)
@@ -678,14 +791,19 @@ func TestCreateStorageClusterPeerIncludesTLSManifests(t *testing.T) {
 		if err := json.Unmarshal(manifests[2].RawExtension.Raw, &peerManifest); err != nil {
 			t.Fatalf("failed to decode StorageClusterPeer manifest: %v", err)
 		}
-		if peerManifest.Spec.ServerCAConfigMap.Name != remotePeerName+"-server-ca" || peerManifest.Spec.ServerCAConfigMap.Key != "ca.crt" {
+		if peerManifest.Spec.ServerCAConfigMap.Name != remotePeerName+"-server-ca" ||
+			peerManifest.Spec.ServerCAConfigMap.Key != "ca.crt" {
 			t.Errorf("unexpected server CA reference: %#v", peerManifest.Spec.ServerCAConfigMap)
 		}
 		if peerManifest.Spec.ServerSAN != tc.remoteTLS.ServerSAN {
 			t.Errorf("expected remote server SAN %q, got %q", tc.remoteTLS.ServerSAN, peerManifest.Spec.ServerSAN)
 		}
 		if peerManifest.Spec.ClientCertSecret.Name != tc.localTLS.ClientCertName {
-			t.Errorf("expected local client certificate %q, got %q", tc.localTLS.ClientCertName, peerManifest.Spec.ClientCertSecret.Name)
+			t.Errorf(
+				"expected local client certificate %q, got %q",
+				tc.localTLS.ClientCertName,
+				peerManifest.Spec.ClientCertSecret.Name,
+			)
 		}
 		if peerManifest.Spec.ClientCAConfigMap.Name != remotePeerName+"-client-ca" {
 			t.Errorf("unexpected client CA reference: %q", peerManifest.Spec.ClientCAConfigMap.Name)

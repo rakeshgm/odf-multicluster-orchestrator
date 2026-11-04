@@ -12,7 +12,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func CreateOrUpdateManifestWork(ctx context.Context, c client.Client, name string, namespace string, manifestConfigOptions []workv1.ManifestConfigOption, ownerRef metav1.OwnerReference, manifests ...[]byte) (controllerutil.OperationResult, error) {
+func CreateOrUpdateManifestWork(
+	ctx context.Context,
+	c client.Client,
+	name string,
+	namespace string,
+	manifestConfigOptions []workv1.ManifestConfigOption,
+	ownerRef metav1.OwnerReference,
+	manifests ...[]byte,
+) (controllerutil.OperationResult, error) {
 	mw := workv1.ManifestWork{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -46,15 +54,24 @@ func CreateOrUpdateManifestWork(ctx context.Context, c client.Client, name strin
 		}
 		return nil
 	})
-
 	if err != nil {
-		return operationResult, fmt.Errorf("failed to create and update ManifestWork %s for namespace %s. error %w", name, namespace, err)
+		return operationResult, fmt.Errorf(
+			"failed to create and update ManifestWork %s for namespace %s. error %w",
+			name,
+			namespace,
+			err,
+		)
 	}
 
 	return operationResult, nil
 }
 
-func GetManifestWork(ctx context.Context, c client.Client, manifestWorkName string, namespace string) (*workv1.ManifestWork, error) {
+func GetManifestWork(
+	ctx context.Context,
+	c client.Client,
+	manifestWorkName string,
+	namespace string,
+) (*workv1.ManifestWork, error) {
 	var manifestWork workv1.ManifestWork
 
 	if err := c.Get(ctx, types.NamespacedName{

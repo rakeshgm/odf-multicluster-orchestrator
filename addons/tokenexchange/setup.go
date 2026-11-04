@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	"github.com/openshift/library-go/pkg/assets"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	certificatesv1 "k8s.io/api/certificates/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,7 +55,10 @@ type Addons struct {
 }
 
 // Manifests generates manifestworks to deploy the token exchange addon agent on the managed cluster
-func (a *Addons) Manifests(cluster *clusterv1.ManagedCluster, addon *addonapiv1alpha1.ManagedClusterAddOn) ([]runtime.Object, error) {
+func (a *Addons) Manifests(
+	cluster *clusterv1.ManagedCluster,
+	addon *addonapiv1alpha1.ManagedClusterAddOn,
+) ([]runtime.Object, error) {
 	objects := []runtime.Object{}
 
 	installNamespace := addon.Spec.InstallNamespace
@@ -73,9 +75,16 @@ func (a *Addons) Manifests(cluster *clusterv1.ManagedCluster, addon *addonapiv1a
 
 	var odfOperatorNamespace string
 	if utils.HasRequiredODFKey(cluster) {
-		odfOperatorNamespacedName, err := utils.GetNamespacedNameFromClusterClaim(cluster, utils.OdfInfoClusterClaimNamespacedName)
+		odfOperatorNamespacedName, err := utils.GetNamespacedNameFromClusterClaim(
+			cluster,
+			utils.OdfInfoClusterClaimNamespacedName,
+		)
 		if err != nil {
-			return objects, fmt.Errorf("error while getting DF operator namespace on the spoke cluster %q. %w", cluster.Name, err)
+			return objects, fmt.Errorf(
+				"error while getting DF operator namespace on the spoke cluster %q. %w",
+				cluster.Name,
+				err,
+			)
 		}
 		odfOperatorNamespace = odfOperatorNamespacedName.Namespace
 	} else {
@@ -134,7 +143,11 @@ func (a *Addons) GetAgentAddonOptions() agent.AgentAddonOptions {
 // 1. if the signer name in csr request is valid.
 // 2. if organization field and commonName field in csr request is valid.
 // 3. if user name in csr is the same as commonName field in csr request.
-func (a *Addons) csrApproveCheck(cluster *clusterv1.ManagedCluster, addon *addonapiv1alpha1.ManagedClusterAddOn, csr *certificatesv1.CertificateSigningRequest) bool {
+func (a *Addons) csrApproveCheck(
+	cluster *clusterv1.ManagedCluster,
+	addon *addonapiv1alpha1.ManagedClusterAddOn,
+	csr *certificatesv1.CertificateSigningRequest,
+) bool {
 	groups := agent.DefaultGroups(cluster.Name, a.AddonName)
 	clusterAddOnGroup := groups[0]
 	addOnGroup := groups[1]
@@ -183,7 +196,10 @@ func (a *Addons) csrApproveCheck(cluster *clusterv1.ManagedCluster, addon *addon
 }
 
 // Generates manifestworks to deploy the required roles of addon agent
-func (a *Addons) permissionConfig(cluster *clusterv1.ManagedCluster, addon *addonapiv1alpha1.ManagedClusterAddOn) error {
+func (a *Addons) permissionConfig(
+	cluster *clusterv1.ManagedCluster,
+	addon *addonapiv1alpha1.ManagedClusterAddOn,
+) error {
 	groups := agent.DefaultGroups(cluster.Name, a.AddonName)
 	user := agent.DefaultUser(cluster.Name, a.AddonName, a.AddonName)
 	clusterName := cluster.Name

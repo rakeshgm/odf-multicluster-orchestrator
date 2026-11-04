@@ -114,7 +114,10 @@ func Test_GetAllStorageVendorConfigMaps(t *testing.T) {
 				},
 			},
 			want: map[string]types.NamespacedName{
-				IbmScaleClusterClaimNamespacedName: {Namespace: "ibm-spectrum-scale", Name: "ibm-spectrum-scale-replicationinfo"},
+				IbmScaleClusterClaimNamespacedName: {
+					Namespace: "ibm-spectrum-scale",
+					Name:      "ibm-spectrum-scale-replicationinfo",
+				},
 			},
 		},
 		{
@@ -134,8 +137,11 @@ func Test_GetAllStorageVendorConfigMaps(t *testing.T) {
 				},
 			},
 			want: map[string]types.NamespacedName{
-				OdfInfoClusterClaimNamespacedName:  {Namespace: "openshift-storage", Name: "odf-info"},
-				IbmScaleClusterClaimNamespacedName: {Namespace: "ibm-spectrum-scale", Name: "ibm-spectrum-scale-replicationinfo"},
+				OdfInfoClusterClaimNamespacedName: {Namespace: "openshift-storage", Name: "odf-info"},
+				IbmScaleClusterClaimNamespacedName: {
+					Namespace: "ibm-spectrum-scale",
+					Name:      "ibm-spectrum-scale-replicationinfo",
+				},
 			},
 		},
 		{

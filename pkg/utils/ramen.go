@@ -60,7 +60,14 @@ func mergeCustomS3ProfileFields(current *rmn.S3StoreProfile, expected *rmn.S3Sto
 }
 
 // UpdateRamenConfigForS3Configuration updates the Ramen ConfigMap with S3 profile from S3Configuration
-func UpdateRamenConfigForS3Configuration(ctx context.Context, rc client.Client, s3ConfigName string, s3Bucket, s3Region, s3Endpoint string, ramenHubNamespace string, logger *slog.Logger) error {
+func UpdateRamenConfigForS3Configuration(
+	ctx context.Context,
+	rc client.Client,
+	s3ConfigName string,
+	s3Bucket, s3Region, s3Endpoint string,
+	ramenHubNamespace string,
+	logger *slog.Logger,
+) error {
 	logger.Info("Updating Ramen Hub Operator config for S3Configuration", "s3ConfigName", s3ConfigName)
 
 	expectedS3Profile := rmn.S3StoreProfile{
@@ -85,7 +92,11 @@ func UpdateRamenConfigForS3Configuration(ctx context.Context, rc client.Client, 
 
 	ramenConfigData, ok := currentRamenConfigMap.Data["ramen_manager_config.yaml"]
 	if !ok {
-		err := fmt.Errorf("DR hub operator config data is empty for the config %q in namespace %q", RamenHubOperatorConfigName, ramenHubNamespace)
+		err := fmt.Errorf(
+			"DR hub operator config data is empty for the config %q in namespace %q",
+			RamenHubOperatorConfigName,
+			ramenHubNamespace,
+		)
 		logger.Error("DR hub operator config data is missing", "error", err)
 		return err
 	}
@@ -109,7 +120,11 @@ func UpdateRamenConfigForS3Configuration(ctx context.Context, rc client.Client, 
 		if existingProfiles[i].S3ProfileName == expectedS3Profile.S3ProfileName {
 			mergeCustomS3ProfileFields(&existingProfiles[i], &expectedS3Profile)
 			if areS3ProfileFieldsEqual(expectedS3Profile, existingProfiles[i]) {
-				logger.Info("No change detected in S3 profile, skipping update", "S3ProfileName", expectedS3Profile.S3ProfileName)
+				logger.Info(
+					"No change detected in S3 profile, skipping update",
+					"S3ProfileName",
+					expectedS3Profile.S3ProfileName,
+				)
 				return nil
 			}
 			updateS3ProfileFields(&expectedS3Profile, &existingProfiles[i])
@@ -144,12 +159,24 @@ func UpdateRamenConfigForS3Configuration(ctx context.Context, rc client.Client, 
 		return err
 	}
 
-	logger.Info("Ramen Hub Operator config updated successfully", "ConfigMapName", namespacedName, "S3ProfileName", s3ConfigName)
+	logger.Info(
+		"Ramen Hub Operator config updated successfully",
+		"ConfigMapName",
+		namespacedName,
+		"S3ProfileName",
+		s3ConfigName,
+	)
 	return nil
 }
 
 // RemoveS3ProfileFromRamenConfig removes an S3 profile from the Ramen ConfigMap
-func RemoveS3ProfileFromRamenConfig(ctx context.Context, rc client.Client, s3ConfigName string, ramenHubNamespace string, logger *slog.Logger) error {
+func RemoveS3ProfileFromRamenConfig(
+	ctx context.Context,
+	rc client.Client,
+	s3ConfigName string,
+	ramenHubNamespace string,
+	logger *slog.Logger,
+) error {
 	logger.Info("Removing S3 profile from Ramen Hub Operator config", "s3ProfileName", s3ConfigName)
 
 	currentRamenConfigMap := corev1.ConfigMap{}

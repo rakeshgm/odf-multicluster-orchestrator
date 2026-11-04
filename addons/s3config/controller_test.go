@@ -22,13 +22,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	obv1alpha1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	routev1 "github.com/openshift/api/route/v1"
+	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -196,7 +194,10 @@ func TestReconcile_SuccessfulSync(t *testing.T) {
 		t.Errorf("Hub secret AWS_ACCESS_KEY_ID incorrect. Got: %s", string(hubSecret.Data[utils.AwsAccessKeyId]))
 	}
 	if string(hubSecret.Data[utils.AwsSecretAccessKey]) != "test-secret-key" {
-		t.Errorf("Hub secret AWS_SECRET_ACCESS_KEY incorrect. Got: %s", string(hubSecret.Data[utils.AwsSecretAccessKey]))
+		t.Errorf(
+			"Hub secret AWS_SECRET_ACCESS_KEY incorrect. Got: %s",
+			string(hubSecret.Data[utils.AwsSecretAccessKey]),
+		)
 	}
 	if string(hubSecret.Data[utils.S3BucketName]) != "test-bucket" {
 		t.Errorf("Hub secret S3_BUCKET incorrect. Got: %s", string(hubSecret.Data[utils.S3BucketName]))

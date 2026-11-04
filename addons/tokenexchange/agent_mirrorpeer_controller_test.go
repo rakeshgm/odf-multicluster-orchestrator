@@ -106,7 +106,10 @@ storageCluster:
 func TestMirrorPeerReconcile(t *testing.T) {
 	ctx := context.TODO()
 	scheme := testSchemeInstance
-	fakeHubClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(mirrorpeer1, &mirrorpeer2, odfClientInfoConfigMap).Build()
+	fakeHubClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(mirrorpeer1, &mirrorpeer2, odfClientInfoConfigMap).
+		Build()
 	os.Setenv("POD_NAMESPACE", odfNamespace)
 
 	for _, pr := range mirrorpeer1.Spec.Items {
@@ -118,7 +121,10 @@ func TestMirrorPeerReconcile(t *testing.T) {
 			Spec: ocsv1.StorageClusterSpec{},
 		}
 
-		fakeSpokeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&storageCluster, &odfInfoConfigMap).Build()
+		fakeSpokeClient := fake.NewClientBuilder().
+			WithScheme(scheme).
+			WithObjects(&storageCluster, &odfInfoConfigMap).
+			Build()
 
 		r := MirrorPeerReconciler{
 			HubClient:            fakeHubClient,

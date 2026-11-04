@@ -26,12 +26,11 @@ import (
 	"strings"
 	"time"
 
+	ramenv1alpha1 "github.com/ramendr/ramen/api/v1alpha1"
 	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/odf"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
-	ramenv1alpha1 "github.com/ramendr/ramen/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -150,7 +149,11 @@ func (r *MirrorPeerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return result, nil
 }
 
-func (r *MirrorPeerReconciler) reconcilePhases(ctx context.Context, logger *slog.Logger, mirrorPeer *multiclusterv1alpha1.MirrorPeer) (ctrl.Result, error) {
+func (r *MirrorPeerReconciler) reconcilePhases(
+	ctx context.Context,
+	logger *slog.Logger,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+) (ctrl.Result, error) {
 	mirrorPeer.Status.Phase = multiclusterv1alpha1.Initializing
 
 	vendorType := mirrorPeer.Spec.StorageVendor
@@ -159,7 +162,12 @@ func (r *MirrorPeerReconciler) reconcilePhases(ctx context.Context, logger *slog
 		logger.Error("Failed to create storage vendor", "vendor", vendorType, "error", err)
 		mirrorPeer.Status.Phase = multiclusterv1alpha1.Failed
 		mirrorPeer.Status.Message = multiclusterv1alpha1.InitializationFailed
-		utils.SetValidatedFalseCondition(&mirrorPeer.Status.Conditions, mirrorPeer.Generation, err.Error(), multiclusterv1alpha1.ReasonInitializationFailed)
+		utils.SetValidatedFalseCondition(
+			&mirrorPeer.Status.Conditions,
+			mirrorPeer.Generation,
+			err.Error(),
+			multiclusterv1alpha1.ReasonInitializationFailed,
+		)
 		return ctrl.Result{}, err
 	}
 
@@ -167,7 +175,12 @@ func (r *MirrorPeerReconciler) reconcilePhases(ctx context.Context, logger *slog
 		logger.Error("MirrorPeer validation failed", "error", err)
 		mirrorPeer.Status.Phase = multiclusterv1alpha1.Failed
 		mirrorPeer.Status.Message = multiclusterv1alpha1.ValidationFailed
-		utils.SetValidatedFalseCondition(&mirrorPeer.Status.Conditions, mirrorPeer.Generation, err.Error(), multiclusterv1alpha1.ReasonValidationFailed)
+		utils.SetValidatedFalseCondition(
+			&mirrorPeer.Status.Conditions,
+			mirrorPeer.Generation,
+			err.Error(),
+			multiclusterv1alpha1.ReasonValidationFailed,
+		)
 		return ctrl.Result{}, err
 	}
 
@@ -175,22 +188,42 @@ func (r *MirrorPeerReconciler) reconcilePhases(ctx context.Context, logger *slog
 		logger.Error("MirrorPeer vendor validation failed", "error", err)
 		mirrorPeer.Status.Phase = multiclusterv1alpha1.Failed
 		mirrorPeer.Status.Message = multiclusterv1alpha1.ValidationFailed
-		utils.SetValidatedFalseCondition(&mirrorPeer.Status.Conditions, mirrorPeer.Generation, err.Error(), multiclusterv1alpha1.ReasonInitializationFailed)
+		utils.SetValidatedFalseCondition(
+			&mirrorPeer.Status.Conditions,
+			mirrorPeer.Generation,
+			err.Error(),
+			multiclusterv1alpha1.ReasonInitializationFailed,
+		)
 		return ctrl.Result{}, err
 	}
 
-	utils.SetValidatedTrueCondition(&mirrorPeer.Status.Conditions, mirrorPeer.Generation, multiclusterv1alpha1.MessageMirrorPeerValid, multiclusterv1alpha1.ReasonValidated)
+	utils.SetValidatedTrueCondition(
+		&mirrorPeer.Status.Conditions,
+		mirrorPeer.Generation,
+		multiclusterv1alpha1.MessageMirrorPeerValid,
+		multiclusterv1alpha1.ReasonValidated,
+	)
 
 	if !mirrorPeer.GetDeletionTimestamp().IsZero() {
 		logger.Info("Deleting MirrorPeer")
 		mirrorPeer.Status.Phase = multiclusterv1alpha1.Deleting
 		mirrorPeer.Status.Message = multiclusterv1alpha1.DeletionInProgress
-		utils.SetDeletedFalseCondition(&mirrorPeer.Status.Conditions, mirrorPeer.Generation, multiclusterv1alpha1.MessageDeletionInProgress, multiclusterv1alpha1.ReasonDeletionInProgress)
+		utils.SetDeletedFalseCondition(
+			&mirrorPeer.Status.Conditions,
+			mirrorPeer.Generation,
+			multiclusterv1alpha1.MessageDeletionInProgress,
+			multiclusterv1alpha1.ReasonDeletionInProgress,
+		)
 
 		result, err := r.deleteMirrorPeer(ctx, logger, mirrorPeer, vendor)
 		if err != nil {
 			mirrorPeer.Status.Message = multiclusterv1alpha1.DeletionFailed
-			utils.SetDeletedFalseCondition(&mirrorPeer.Status.Conditions, mirrorPeer.Generation, err.Error(), multiclusterv1alpha1.ReasonDeletionFailed)
+			utils.SetDeletedFalseCondition(
+				&mirrorPeer.Status.Conditions,
+				mirrorPeer.Generation,
+				err.Error(),
+				multiclusterv1alpha1.ReasonDeletionFailed,
+			)
 			return result, err
 		} else if result.RequeueAfter > 0 {
 			return result, err
@@ -221,7 +254,12 @@ func (r *MirrorPeerReconciler) reconcilePhases(ctx context.Context, logger *slog
 	}
 
 	mirrorPeer.Status.Phase = multiclusterv1alpha1.Configuring
-	utils.SetConfiguredFalseCondition(&mirrorPeer.Status.Conditions, mirrorPeer.Generation, multiclusterv1alpha1.MessageConfigurationInProgress, multiclusterv1alpha1.ReasonConfigurationInProgress)
+	utils.SetConfiguredFalseCondition(
+		&mirrorPeer.Status.Conditions,
+		mirrorPeer.Generation,
+		multiclusterv1alpha1.MessageConfigurationInProgress,
+		multiclusterv1alpha1.ReasonConfigurationInProgress,
+	)
 
 	if res, err := vendor.ConfigureStorageForDR(ctx, mirrorPeer); err != nil || !res.IsZero() {
 		return res, err
@@ -230,11 +268,21 @@ func (r *MirrorPeerReconciler) reconcilePhases(ctx context.Context, logger *slog
 	logger.Info("Successfully reconciled MirrorPeer")
 	mirrorPeer.Status.Phase = multiclusterv1alpha1.Ready
 	mirrorPeer.Status.Message = multiclusterv1alpha1.MirrorPeerReady
-	utils.SetConfiguredTrueCondition(&mirrorPeer.Status.Conditions, mirrorPeer.Generation, multiclusterv1alpha1.MessageConfigurationDone, multiclusterv1alpha1.ReasonConfigurationDone)
+	utils.SetConfiguredTrueCondition(
+		&mirrorPeer.Status.Conditions,
+		mirrorPeer.Generation,
+		multiclusterv1alpha1.MessageConfigurationDone,
+		multiclusterv1alpha1.ReasonConfigurationDone,
+	)
 	return ctrl.Result{}, nil
 }
 
-func (r *MirrorPeerReconciler) deleteMirrorPeer(ctx context.Context, logger *slog.Logger, mirrorPeer *multiclusterv1alpha1.MirrorPeer, vendor storagevendor.StorageVendor) (reconcile.Result, error) {
+func (r *MirrorPeerReconciler) deleteMirrorPeer(
+	ctx context.Context,
+	logger *slog.Logger,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+	vendor storagevendor.StorageVendor,
+) (reconcile.Result, error) {
 	drpolicyList := &ramenv1alpha1.DRPolicyList{}
 	if err := r.Client.List(ctx, drpolicyList); err != nil {
 		logger.Error("Failed to delete resources", "error", err)
@@ -247,8 +295,11 @@ func (r *MirrorPeerReconciler) deleteMirrorPeer(ctx context.Context, logger *slo
 			mirrorPeer.Spec.Items[1].ClusterName == drClusters[1]) ||
 			(mirrorPeer.Spec.Items[0].ClusterName == drClusters[1] &&
 				mirrorPeer.Spec.Items[1].ClusterName == drClusters[0]) {
-			return reconcile.Result{}, fmt.Errorf("DRPolicy '%s' exists and requires MirrorPeer '%s'. MirrorPeer can not be deleted",
-				drpolicyList.Items[i].Name, mirrorPeer.Name)
+			return reconcile.Result{}, fmt.Errorf(
+				"DRPolicy '%s' exists and requires MirrorPeer '%s'. MirrorPeer can not be deleted",
+				drpolicyList.Items[i].Name,
+				mirrorPeer.Name,
+			)
 		}
 	}
 
@@ -294,12 +345,22 @@ func (r *MirrorPeerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		for _, mp := range mpList.Items {
 			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{Name: mp.Name}})
 		}
-		r.Logger.Info("MirrorPeer reconcile requests generated based on ConfigMap change.", "RequestCount", len(reqs), "Requests", reqs)
+		r.Logger.Info(
+			"MirrorPeer reconcile requests generated based on ConfigMap change.",
+			"RequestCount",
+			len(reqs),
+			"Requests",
+			reqs,
+		)
 		return reqs
 	}
 
 	addonToMirrorPeerMapFunc := func(ctx context.Context, object client.Object) []ctrl.Request {
-		r.Logger.Debug("Mapping ManagedClusterAddon to MirrorPeer", "ManagedClusterAddon", client.ObjectKeyFromObject(object))
+		r.Logger.Debug(
+			"Mapping ManagedClusterAddon to MirrorPeer",
+			"ManagedClusterAddon",
+			client.ObjectKeyFromObject(object),
+		)
 		var reqs []ctrl.Request
 		addon, ok := object.(*addonapiv1alpha1.ManagedClusterAddOn)
 		if !ok {
@@ -311,12 +372,22 @@ func (r *MirrorPeerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{Name: owners.Name}})
 			}
 		}
-		r.Logger.Info("MirrorPeer reconcile requests generated based on ManagedClusterAddon change.", "RequestCount", len(reqs), "Requests", reqs)
+		r.Logger.Info(
+			"MirrorPeer reconcile requests generated based on ManagedClusterAddon change.",
+			"RequestCount",
+			len(reqs),
+			"Requests",
+			reqs,
+		)
 		return reqs
 	}
 
 	clusterAddonToMirrorPeerMapFunc := func(ctx context.Context, object client.Object) []ctrl.Request {
-		r.Logger.Debug("Mapping ClusterManagementAddOn to MirrorPeer", "ClusterManagementAddOn", client.ObjectKeyFromObject(object))
+		r.Logger.Debug(
+			"Mapping ClusterManagementAddOn to MirrorPeer",
+			"ClusterManagementAddOn",
+			client.ObjectKeyFromObject(object),
+		)
 		var reqs []ctrl.Request
 		addon, ok := object.(*addonapiv1alpha1.ClusterManagementAddOn)
 		if !ok {
@@ -328,7 +399,13 @@ func (r *MirrorPeerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{Name: owners.Name}})
 			}
 		}
-		r.Logger.Info("MirrorPeer reconcile requests generated based on ClusterManagementAddOn change.", "RequestCount", len(reqs), "Requests", reqs)
+		r.Logger.Info(
+			"MirrorPeer reconcile requests generated based on ClusterManagementAddOn change.",
+			"RequestCount",
+			len(reqs),
+			"Requests",
+			reqs,
+		)
 		return reqs
 	}
 
@@ -362,7 +439,11 @@ func (r *MirrorPeerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MirrorPeerReconciler) createS3Configuration(ctx context.Context, logger *slog.Logger, mirrorPeer *multiclusterv1alpha1.MirrorPeer) error {
+func (r *MirrorPeerReconciler) createS3Configuration(
+	ctx context.Context,
+	logger *slog.Logger,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+) error {
 	logger.Info("Checking if S3Configuration needs to be created for upgrade", "MirrorPeer", mirrorPeer.Name)
 
 	// Only proceed if ManageS3 was enabled (deprecated field from 5.1)
@@ -397,7 +478,13 @@ func (r *MirrorPeerReconciler) createS3Configuration(ctx context.Context, logger
 			s3ProfileName: drCluster.Spec.S3ProfileName,
 			drCluster:     drCluster,
 		})
-		logger.Info("Found DRCluster with s3ProfileName", "cluster", peerRef.ClusterName, "s3ProfileName", drCluster.Spec.S3ProfileName)
+		logger.Info(
+			"Found DRCluster with s3ProfileName",
+			"cluster",
+			peerRef.ClusterName,
+			"s3ProfileName",
+			drCluster.Spec.S3ProfileName,
+		)
 
 	}
 
@@ -435,7 +522,13 @@ func (r *MirrorPeerReconciler) createS3Configuration(ctx context.Context, logger
 			newOwners := append(owners[:idx], owners[idx+1:]...)
 			drCluster.SetOwnerReferences(newOwners)
 			if err := r.Update(ctx, drCluster); err != nil {
-				logger.Error("Failed to remove MirrorPeer ownerRef from DRCluster", "error", err, "cluster", drCluster.Name)
+				logger.Error(
+					"Failed to remove MirrorPeer ownerRef from DRCluster",
+					"error",
+					err,
+					"cluster",
+					drCluster.Name,
+				)
 				return err
 			}
 			logger.Info("Successfully removed MirrorPeer ownerRef from DRCluster", "cluster", drCluster.Name)
@@ -446,8 +539,20 @@ func (r *MirrorPeerReconciler) createS3Configuration(ctx context.Context, logger
 	return nil
 }
 
-func (r *MirrorPeerReconciler) createS3ConfigForProfile(ctx context.Context, logger *slog.Logger, mirrorPeer *multiclusterv1alpha1.MirrorPeer, s3ProfileName string, managedClusters []string) error {
-	logger.Info("Creating S3Configuration for profile", "s3ProfileName", s3ProfileName, "managedClusters", managedClusters)
+func (r *MirrorPeerReconciler) createS3ConfigForProfile(
+	ctx context.Context,
+	logger *slog.Logger,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+	s3ProfileName string,
+	managedClusters []string,
+) error {
+	logger.Info(
+		"Creating S3Configuration for profile",
+		"s3ProfileName",
+		s3ProfileName,
+		"managedClusters",
+		managedClusters,
+	)
 
 	// Check if S3Configuration already exists
 	s3Config := &multiclusterv1alpha1.S3Configuration{}
@@ -575,7 +680,12 @@ func generateLegacyOBCName(mirrorPeer *multiclusterv1alpha1.MirrorPeer) string {
 }
 
 // isMirrorPeerValid validates the MirrorPeer CR
-func isMirrorPeerValid(ctx context.Context, client client.Client, logger *slog.Logger, mirrorPeer *multiclusterv1alpha1.MirrorPeer) error {
+func isMirrorPeerValid(
+	ctx context.Context,
+	client client.Client,
+	logger *slog.Logger,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+) error {
 	logger.Info("Validating MirrorPeer")
 	// MirrorPeer.Spec must be defined
 	if err := undefinedMirrorPeerSpec(mirrorPeer.Spec); err != nil {

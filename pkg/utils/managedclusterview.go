@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	viewv1beta1 "github.com/stolostron/multicloud-operators-foundation/pkg/apis/view/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
@@ -67,7 +68,6 @@ func CreateOrUpdateManagedClusterView(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, controllerutil.OperationResultNone, err
 	}

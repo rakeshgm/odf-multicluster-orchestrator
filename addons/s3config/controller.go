@@ -6,11 +6,10 @@ import (
 	"log/slog"
 	"time"
 
-	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	obv1alpha1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	routev1 "github.com/openshift/api/route/v1"
+	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -116,7 +115,11 @@ func (r *S3ConfigAddonReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 // syncSecretToHub syncs the OBC secret from spoke to hub
-func (r *S3ConfigAddonReconciler) syncSecretToHub(ctx context.Context, logger *slog.Logger, obc *obv1alpha1.ObjectBucketClaim) error {
+func (r *S3ConfigAddonReconciler) syncSecretToHub(
+	ctx context.Context,
+	logger *slog.Logger,
+	obc *obv1alpha1.ObjectBucketClaim,
+) error {
 	// Fetch OBC secret from spoke
 	var obcSecret corev1.Secret
 	if err := r.SpokeClient.Get(ctx, client.ObjectKey{
@@ -188,14 +191,36 @@ func (r *S3ConfigAddonReconciler) syncSecretToHub(ctx context.Context, logger *s
 	// Create or update secret on hub
 	if err := r.HubClient.Create(ctx, hubSecret); err != nil {
 		if errors.IsAlreadyExists(err) {
-			logger.Info("Secret already exists on hub, updating", "secret", hubSecret.Name, "namespace", hubSecret.Namespace)
+			logger.Info(
+				"Secret already exists on hub, updating",
+				"secret",
+				hubSecret.Name,
+				"namespace",
+				hubSecret.Namespace,
+			)
 			if err := r.HubClient.Update(ctx, hubSecret); err != nil {
-				return fmt.Errorf("failed to update secret %q in namespace %q on hub: %w", hubSecret.Name, hubSecret.Namespace, err)
+				return fmt.Errorf(
+					"failed to update secret %q in namespace %q on hub: %w",
+					hubSecret.Name,
+					hubSecret.Namespace,
+					err,
+				)
 			}
-			logger.Info("Successfully updated secret on hub", "secret", hubSecret.Name, "namespace", hubSecret.Namespace)
+			logger.Info(
+				"Successfully updated secret on hub",
+				"secret",
+				hubSecret.Name,
+				"namespace",
+				hubSecret.Namespace,
+			)
 			return nil
 		}
-		return fmt.Errorf("failed to create secret %q in namespace %q on hub: %w", hubSecret.Name, hubSecret.Namespace, err)
+		return fmt.Errorf(
+			"failed to create secret %q in namespace %q on hub: %w",
+			hubSecret.Name,
+			hubSecret.Namespace,
+			err,
+		)
 	}
 
 	logger.Info("Successfully created secret on hub", "secret", hubSecret.Name, "namespace", hubSecret.Namespace)

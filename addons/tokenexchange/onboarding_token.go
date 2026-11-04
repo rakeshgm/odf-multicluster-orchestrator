@@ -14,7 +14,6 @@ import (
 
 	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,21 +23,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-type OnboardingSubjectRole string
-type OnboardingTicket struct {
-	ID                string                `json:"id"`
-	ExpirationDate    int64                 `json:"expirationDate,string"`
-	SubjectRole       OnboardingSubjectRole `json:"subjectRole"`
-	StorageQuotaInGiB *uint                 `json:"storageQuotaInGiB,omitempty"`
-	StorageCluster    types.UID             `json:"storageCluster"`
-}
+type (
+	OnboardingSubjectRole string
+	OnboardingTicket      struct {
+		ID                string                `json:"id"`
+		ExpirationDate    int64                 `json:"expirationDate,string"`
+		SubjectRole       OnboardingSubjectRole `json:"subjectRole"`
+		StorageQuotaInGiB *uint                 `json:"storageQuotaInGiB,omitempty"`
+		StorageCluster    types.UID             `json:"storageCluster"`
+	}
+)
 
 func requestStorageClusterPeerToken(ctx context.Context, proxyServiceNamespace string) ([]byte, error) {
 	token, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read token: %w", err)
 	}
-	url := fmt.Sprintf("https://ux-backend-proxy.%s.svc.cluster.local:8888/onboarding/peer-tokens", proxyServiceNamespace)
+	url := fmt.Sprintf(
+		"https://ux-backend-proxy.%s.svc.cluster.local:8888/onboarding/peer-tokens",
+		proxyServiceNamespace,
+	)
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
@@ -71,10 +75,20 @@ func requestStorageClusterPeerToken(ctx context.Context, proxyServiceNamespace s
 	return body, nil
 }
 
-func createStorageClusterPeerTokenSecret(ctx context.Context, cl client.Client, scheme *runtime.Scheme, spokeClusterName string, odfOperatorNamespace string, mirrorPeer *multiclusterv1alpha1.MirrorPeer, storageClusterRef *multiclusterv1alpha1.StorageClusterRef) error {
+func createStorageClusterPeerTokenSecret(
+	ctx context.Context,
+	cl client.Client,
+	scheme *runtime.Scheme,
+	spokeClusterName string,
+	odfOperatorNamespace string,
+	mirrorPeer *multiclusterv1alpha1.MirrorPeer,
+	storageClusterRef *multiclusterv1alpha1.StorageClusterRef,
+) error {
 	uniqueSecretName := string(mirrorPeer.GetUID())
 	tokenSecret := &corev1.Secret{}
-	if err := cl.Get(ctx, types.NamespacedName{Namespace: spokeClusterName, Name: uniqueSecretName}, tokenSecret); client.IgnoreNotFound(err) != nil {
+	if err := cl.Get(ctx, types.NamespacedName{Namespace: spokeClusterName, Name: uniqueSecretName}, tokenSecret); client.IgnoreNotFound(
+		err,
+	) != nil {
 		return fmt.Errorf("failed to get secret %s/%s: %w", spokeClusterName, uniqueSecretName, err)
 	}
 
@@ -112,7 +126,12 @@ func createStorageClusterPeerTokenSecret(ctx context.Context, cl client.Client, 
 	return cl.Create(ctx, tokenSecret)
 }
 
-func deleteStorageClusterPeerTokenSecret(ctx context.Context, client client.Client, tokenNamespace string, tokenName string) error {
+func deleteStorageClusterPeerTokenSecret(
+	ctx context.Context,
+	client client.Client,
+	tokenNamespace string,
+	tokenName string,
+) error {
 	token := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tokenName,
@@ -128,7 +147,6 @@ func deleteStorageClusterPeerTokenSecret(ctx context.Context, client client.Clie
 }
 
 func UnmarshalOnboardingToken(token *corev1.Secret) (*OnboardingTicket, error) {
-
 	ticketArr := strings.Split(string(token.Data[utils.SecretDataKey]), ".")
 
 	message, err := base64.StdEncoding.DecodeString(ticketArr[0])

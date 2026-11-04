@@ -7,11 +7,10 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/odf"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	templatev1 "github.com/openshift/api/template/v1"
 	ocsv1alpha1 "github.com/red-hat-storage/ocs-operator/api/v4/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/odf"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -63,7 +62,10 @@ func (r *ResourceDistributionReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-			if !reflect.DeepEqual(oldConsumer.Spec.VolumeReplicationClasses, newConsumer.Spec.VolumeReplicationClasses) {
+			if !reflect.DeepEqual(
+				oldConsumer.Spec.VolumeReplicationClasses,
+				newConsumer.Spec.VolumeReplicationClasses,
+			) {
 				return true
 			}
 			if !reflect.DeepEqual(oldConsumer.Status.Client, newConsumer.Status.Client) {
@@ -87,7 +89,8 @@ func (r *ResourceDistributionReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		For(&corev1.ConfigMap{}, builder.WithPredicates(
 			predicate.NewPredicateFuncs(
 				func(object client.Object) bool {
-					return object.GetName() == odf.StorageClientMappingConfigMapName && object.GetNamespace() == r.CurrentNamespace
+					return object.GetName() == odf.StorageClientMappingConfigMapName &&
+						object.GetNamespace() == r.CurrentNamespace
 				}),
 		)).
 		Watches(&templatev1.Template{}, eventHandler, builder.WithPredicates(labelSelectorPredicate)).
@@ -184,7 +187,8 @@ func (r *ResourceDistributionReconciler) Reconcile(ctx context.Context, req ctrl
 
 	for k := range storageClientMapping.Data {
 		for consumerIndex := range storageConsumerList.Items {
-			if storageConsumerList.Items[consumerIndex].Status.Client != nil && storageConsumerList.Items[consumerIndex].Status.Client.ID == k {
+			if storageConsumerList.Items[consumerIndex].Status.Client != nil &&
+				storageConsumerList.Items[consumerIndex].Status.Client.ID == k {
 				addVRCToConsumers = append(addVRCToConsumers, storageConsumerList.Items[consumerIndex].GetName())
 			}
 		}
@@ -209,14 +213,26 @@ func (r *ResourceDistributionReconciler) Reconcile(ctx context.Context, req ctrl
 						Name: template.Name,
 					},
 				}
-				index := slices.IndexFunc(expectedConsumer.Spec.VolumeReplicationClasses, func(expectedVRC ocsv1alpha1.VolumeReplicationClassSpec) bool {
-					return expectedVRC.Name == vrc.CommonClassSpec.Name
-				})
+				index := slices.IndexFunc(
+					expectedConsumer.Spec.VolumeReplicationClasses,
+					func(expectedVRC ocsv1alpha1.VolumeReplicationClassSpec) bool {
+						return expectedVRC.Name == vrc.CommonClassSpec.Name
+					},
+				)
 				if template.DeletionTimestamp.IsZero() {
 					if slices.Contains(addVRCToConsumers, foundConsumer.GetName()) {
-						logger.Info("Adding VRC to StorageConsumer", "VRC", vrc, "StorageConsumer", foundConsumer.GetName())
+						logger.Info(
+							"Adding VRC to StorageConsumer",
+							"VRC",
+							vrc,
+							"StorageConsumer",
+							foundConsumer.GetName(),
+						)
 						if index == -1 {
-							expectedConsumer.Spec.VolumeReplicationClasses = append(expectedConsumer.Spec.VolumeReplicationClasses, vrc)
+							expectedConsumer.Spec.VolumeReplicationClasses = append(
+								expectedConsumer.Spec.VolumeReplicationClasses,
+								vrc,
+							)
 						}
 					} else {
 						logger.Info("StorageConsumer does not need this VRC. Removing VRC from StorageConsumer", "VRC", vrc, "StorageConsumer", foundConsumer.GetName())
@@ -230,13 +246,24 @@ func (r *ResourceDistributionReconciler) Reconcile(ctx context.Context, req ctrl
 						expectedConsumer.Spec.VolumeReplicationClasses = slices.Delete(expectedConsumer.Spec.VolumeReplicationClasses, index, index+1)
 					}
 				}
-				if !reflect.DeepEqual(expectedConsumer.Spec.VolumeReplicationClasses, foundConsumer.Spec.VolumeReplicationClasses) {
+				if !reflect.DeepEqual(
+					expectedConsumer.Spec.VolumeReplicationClasses,
+					foundConsumer.Spec.VolumeReplicationClasses,
+				) {
 					err := r.SpokeClient.Update(ctx, expectedConsumer)
 					if err != nil {
-						return ctrl.Result{}, fmt.Errorf("unable to add VolumeReplicationClasses to StorageConsumer %q: %w", expectedConsumer.Name, err)
+						return ctrl.Result{}, fmt.Errorf(
+							"unable to add VolumeReplicationClasses to StorageConsumer %q: %w",
+							expectedConsumer.Name,
+							err,
+						)
 					}
 				}
-				logger.Info("VolumeReplicationClass was updated on StorageConsumers.", "StorageConsumer", expectedConsumer.GetName())
+				logger.Info(
+					"VolumeReplicationClass was updated on StorageConsumers.",
+					"StorageConsumer",
+					expectedConsumer.GetName(),
+				)
 			}
 
 			if template.GetLabels()[utils.ObjectKindLabelKey] == "VolumeGroupReplicationClass" {
@@ -245,14 +272,26 @@ func (r *ResourceDistributionReconciler) Reconcile(ctx context.Context, req ctrl
 						Name: template.Name,
 					},
 				}
-				index := slices.IndexFunc(expectedConsumer.Spec.VolumeGroupReplicationClasses, func(expectedVRC ocsv1alpha1.VolumeGroupReplicationClassSpec) bool {
-					return expectedVRC.Name == vgrc.CommonClassSpec.Name
-				})
+				index := slices.IndexFunc(
+					expectedConsumer.Spec.VolumeGroupReplicationClasses,
+					func(expectedVRC ocsv1alpha1.VolumeGroupReplicationClassSpec) bool {
+						return expectedVRC.Name == vgrc.CommonClassSpec.Name
+					},
+				)
 				if template.DeletionTimestamp.IsZero() {
 					if slices.Contains(addVRCToConsumers, foundConsumer.GetName()) {
-						logger.Info("Adding VGRC to StorageConsumer", "VGRC", vgrc, "StorageConsumer", foundConsumer.GetName())
+						logger.Info(
+							"Adding VGRC to StorageConsumer",
+							"VGRC",
+							vgrc,
+							"StorageConsumer",
+							foundConsumer.GetName(),
+						)
 						if index == -1 {
-							expectedConsumer.Spec.VolumeGroupReplicationClasses = append(expectedConsumer.Spec.VolumeGroupReplicationClasses, vgrc)
+							expectedConsumer.Spec.VolumeGroupReplicationClasses = append(
+								expectedConsumer.Spec.VolumeGroupReplicationClasses,
+								vgrc,
+							)
 						}
 					} else {
 						logger.Info("StorageConsumer does not need this VGRC. Removing VGRC from StorageConsumer", "VGRC", vgrc, "StorageConsumer", foundConsumer.GetName())
@@ -266,13 +305,24 @@ func (r *ResourceDistributionReconciler) Reconcile(ctx context.Context, req ctrl
 						expectedConsumer.Spec.VolumeGroupReplicationClasses = slices.Delete(expectedConsumer.Spec.VolumeGroupReplicationClasses, index, index+1)
 					}
 				}
-				if !reflect.DeepEqual(expectedConsumer.Spec.VolumeGroupReplicationClasses, foundConsumer.Spec.VolumeGroupReplicationClasses) {
+				if !reflect.DeepEqual(
+					expectedConsumer.Spec.VolumeGroupReplicationClasses,
+					foundConsumer.Spec.VolumeGroupReplicationClasses,
+				) {
 					err := r.SpokeClient.Update(ctx, expectedConsumer)
 					if err != nil {
-						return ctrl.Result{}, fmt.Errorf("unable to add VolumeGroupReplicationClasses to StorageConsumer %q: %w", expectedConsumer.Name, err)
+						return ctrl.Result{}, fmt.Errorf(
+							"unable to add VolumeGroupReplicationClasses to StorageConsumer %q: %w",
+							expectedConsumer.Name,
+							err,
+						)
 					}
 				}
-				logger.Info("VolumeGroupReplicationClass was updated on StorageConsumers.", "StorageConsumer", expectedConsumer.GetName())
+				logger.Info(
+					"VolumeGroupReplicationClass was updated on StorageConsumers.",
+					"StorageConsumer",
+					expectedConsumer.GetName(),
+				)
 			}
 		}
 		if !template.DeletionTimestamp.IsZero() {

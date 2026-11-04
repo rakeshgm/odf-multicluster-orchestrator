@@ -101,7 +101,11 @@ func TestProcessManagedClusterViews(t *testing.T) {
 		assert.NoError(t, err)
 
 		createdMCV := &viewv1beta1.ManagedClusterView{}
-		err = client.Get(context.TODO(), types.NamespacedName{Name: utils.GetODFManagedClusterViewName("test-cluster"), Namespace: "test-cluster"}, createdMCV)
+		err = client.Get(
+			context.TODO(),
+			types.NamespacedName{Name: utils.GetODFManagedClusterViewName("test-cluster"), Namespace: "test-cluster"},
+			createdMCV,
+		)
 		assert.NoError(t, err)
 		assert.Equal(t, utils.GetODFManagedClusterViewName("test-cluster"), createdMCV.Name)
 		assert.Equal(t, "test-cluster", createdMCV.Namespace)
@@ -143,43 +147,50 @@ func TestProcessManagedClusterViews(t *testing.T) {
 		assert.NoError(t, err)
 
 		updatedMCV := &viewv1beta1.ManagedClusterView{}
-		_ = client.Get(context.TODO(), types.NamespacedName{Name: utils.GetODFManagedClusterViewName("test-cluster"), Namespace: "test-cluster"}, updatedMCV)
+		_ = client.Get(
+			context.TODO(),
+			types.NamespacedName{Name: utils.GetODFManagedClusterViewName("test-cluster"), Namespace: "test-cluster"},
+			updatedMCV,
+		)
 		assert.Equal(t, "odf-info", updatedMCV.Spec.Scope.Name)
 		assert.Equal(t, "openshift-storage", updatedMCV.Spec.Scope.Namespace)
 	})
 
-	t.Run("ManagedClusterView exists and spec matches. Nothing should change. It should be error free", func(t *testing.T) {
-		existingMCV := &viewv1beta1.ManagedClusterView{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      utils.GetODFManagedClusterViewName("test-cluster"),
-				Namespace: "test-cluster",
-			},
-			Spec: viewv1beta1.ViewSpec{
-				Scope: viewv1beta1.ViewScope{
-					Name:      "odf-info",
-					Namespace: "openshift-storage",
-					Resource:  "ConfigMap",
+	t.Run(
+		"ManagedClusterView exists and spec matches. Nothing should change. It should be error free",
+		func(t *testing.T) {
+			existingMCV := &viewv1beta1.ManagedClusterView{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      utils.GetODFManagedClusterViewName("test-cluster"),
+					Namespace: "test-cluster",
 				},
-			},
-		}
-		_ = client.Create(context.TODO(), existingMCV)
-
-		managedCluster := &clusterv1.ManagedCluster{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-cluster",
-			},
-			Status: clusterv1.ManagedClusterStatus{
-				ClusterClaims: []clusterv1.ManagedClusterClaim{
-					{
-						Name:  utils.OdfInfoClusterClaimNamespacedName,
-						Value: "openshift-storage/odf-info",
+				Spec: viewv1beta1.ViewSpec{
+					Scope: viewv1beta1.ViewScope{
+						Name:      "odf-info",
+						Namespace: "openshift-storage",
+						Resource:  "ConfigMap",
 					},
 				},
-			},
-		}
-		err := reconciler.processManagedClusterViews(context.TODO(), managedCluster)
-		assert.NoError(t, err)
-	})
+			}
+			_ = client.Create(context.TODO(), existingMCV)
+
+			managedCluster := &clusterv1.ManagedCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				Status: clusterv1.ManagedClusterStatus{
+					ClusterClaims: []clusterv1.ManagedClusterClaim{
+						{
+							Name:  utils.OdfInfoClusterClaimNamespacedName,
+							Value: "openshift-storage/odf-info",
+						},
+					},
+				},
+			}
+			err := reconciler.processManagedClusterViews(context.TODO(), managedCluster)
+			assert.NoError(t, err)
+		},
+	)
 }
 
 func TestScaleClusterClaimSupport(t *testing.T) {

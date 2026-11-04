@@ -8,13 +8,12 @@ import (
 	"log/slog"
 	"time"
 
-	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/odf"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	replicationv1alpha1 "github.com/csi-addons/kubernetes-csi-addons/api/replication.storage/v1alpha1"
 	templatev1 "github.com/openshift/api/template/v1"
 	ramenv1alpha1 "github.com/ramendr/ramen/api/v1alpha1"
+	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/odf"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,7 +77,13 @@ func (r *DRPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		for _, mp := range drpolicyList.Items {
 			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{Name: mp.Name}})
 		}
-		r.Logger.Info("DRPolicy reconcile requests generated based on ConfigMap change.", "RequestCount", len(reqs), "Requests", reqs)
+		r.Logger.Info(
+			"DRPolicy reconcile requests generated based on ConfigMap change.",
+			"RequestCount",
+			len(reqs),
+			"Requests",
+			reqs,
+		)
 		return reqs
 	}
 
@@ -98,11 +103,18 @@ func (r *DRPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 		var reqs []ctrl.Request
 		for _, dp := range drpolicyList.Items {
-			if len(dp.Spec.DRClusters) == 2 && clusterNames[dp.Spec.DRClusters[0]] && clusterNames[dp.Spec.DRClusters[1]] {
+			if len(dp.Spec.DRClusters) == 2 && clusterNames[dp.Spec.DRClusters[0]] &&
+				clusterNames[dp.Spec.DRClusters[1]] {
 				reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{Name: dp.Name}})
 			}
 		}
-		r.Logger.Info("DRPolicy reconcile requests generated based on MirrorPeer change.", "MirrorPeer", mp.Name, "RequestCount", len(reqs))
+		r.Logger.Info(
+			"DRPolicy reconcile requests generated based on MirrorPeer change.",
+			"MirrorPeer",
+			mp.Name,
+			"RequestCount",
+			len(reqs),
+		)
 		return reqs
 	}
 
@@ -162,7 +174,11 @@ func (r *DRPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	mirrorPeer, err := getMirrorPeerForClusterSet(ctx, r.HubClient, drpolicy.Spec.DRClusters)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			logger.Info("MirrorPeer not found, waiting for MirrorPeer to be created", "DRClusters", drpolicy.Spec.DRClusters)
+			logger.Info(
+				"MirrorPeer not found, waiting for MirrorPeer to be created",
+				"DRClusters",
+				drpolicy.Spec.DRClusters,
+			)
 			return ctrl.Result{}, nil
 		}
 		logger.Error("Error occurred while trying to fetch MirrorPeer for given DRPolicy", "error", err)
@@ -185,14 +201,21 @@ func (r *DRPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 				RequeueAfter: 10 * time.Second,
 			}, nil
 		}
-		return ctrl.Result{}, fmt.Errorf("failed to create VolumeReplicationClass/VolumeGroupReplicationClass via ManifestWork: %v", err)
+		return ctrl.Result{}, fmt.Errorf(
+			"failed to create VolumeReplicationClass/VolumeGroupReplicationClass via ManifestWork: %v",
+			err,
+		)
 	}
 
 	logger.Info("Successfully reconciled DRPolicy")
 	return ctrl.Result{}, nil
 }
 
-func (r *DRPolicyReconciler) createOrUpdateManifestWorkForVRCAndVGRC(ctx context.Context, mp *multiclusterv1alpha1.MirrorPeer, dp *ramenv1alpha1.DRPolicy) error {
+func (r *DRPolicyReconciler) createOrUpdateManifestWorkForVRCAndVGRC(
+	ctx context.Context,
+	mp *multiclusterv1alpha1.MirrorPeer,
+	dp *ramenv1alpha1.DRPolicy,
+) error {
 	logger := r.Logger.With("DRPolicy", dp.Name, "MirrorPeer", mp.Name)
 
 	var vrcList []replicationv1alpha1.VolumeReplicationClass
@@ -248,7 +271,10 @@ func (r *DRPolicyReconciler) createOrUpdateManifestWorkForVRCAndVGRC(ctx context
 
 	if dp.Spec.ReplicationClassSelector.MatchLabels[RBDFlattenVolumeReplicationClassLabelKey] == RBDFlattenVolumeReplicationClassLabelValue {
 		vrcFlatten := *vrc.DeepCopy()
-		vrcFlatten.Name = fmt.Sprintf(RBDFlattenVolumeReplicationClassNameTemplate, utils.FnvHash(dp.Spec.SchedulingInterval))
+		vrcFlatten.Name = fmt.Sprintf(
+			RBDFlattenVolumeReplicationClassNameTemplate,
+			utils.FnvHash(dp.Spec.SchedulingInterval),
+		)
 		vrcFlatten.Labels = map[string]string{
 			RBDFlattenVolumeReplicationClassLabelKey: RBDFlattenVolumeReplicationClassLabelValue,
 			RamenMaintenanceModeLabelKey:             RamenMaintenanceModeLabelValue,
@@ -258,7 +284,10 @@ func (r *DRPolicyReconciler) createOrUpdateManifestWorkForVRCAndVGRC(ctx context
 		vrcList = append(vrcList, vrcFlatten)
 
 		vgrcFlatten := *vgrc.DeepCopy()
-		vgrcFlatten.Name = fmt.Sprintf(RBDFlattenVolumeGroupReplicationClassNameTemplate, utils.FnvHash(dp.Spec.SchedulingInterval))
+		vgrcFlatten.Name = fmt.Sprintf(
+			RBDFlattenVolumeGroupReplicationClassNameTemplate,
+			utils.FnvHash(dp.Spec.SchedulingInterval),
+		)
 		vgrcFlatten.Labels = map[string]string{
 			RBDFlattenVolumeReplicationClassLabelKey: RBDFlattenVolumeReplicationClassLabelValue,
 			RamenMaintenanceModeLabelKey:             RamenMaintenanceModeLabelValue,
@@ -300,7 +329,11 @@ func (r *DRPolicyReconciler) createOrUpdateManifestWorkForVRCAndVGRC(ctx context
 				if cephblockpool.MirrorEnabled {
 					vgrcPoolName := fmt.Sprintf("%s-%v", vgrc.Name, utils.FnvHash(cephblockpool.Name))
 					vgrc.Spec.Parameters["pool"] = cephblockpool.Name
-					vgrcTemplateJson, err := getTemplateForVGRC(vgrc, vgrcPoolName, cInfo.ProviderInfo.NamespacedName.Namespace)
+					vgrcTemplateJson, err := getTemplateForVGRC(
+						vgrc,
+						vgrcPoolName,
+						cInfo.ProviderInfo.NamespacedName.Namespace,
+					)
 					if err != nil {
 						return fmt.Errorf("failed to get template for VGRC %q, error %w", vrc.Name, err)
 					}
@@ -340,12 +373,17 @@ func (r *DRPolicyReconciler) createOrUpdateManifestWorkForVRCAndVGRC(ctx context
 			}
 			return nil
 		})
-
 		if err != nil {
 			logger.Error("Failed to create/update ManifestWork", "ManifestWorkName", manifestWorkName, "error", err)
 			return err
 		}
-		logger.Info("ManifestWork created/updated successfully", "ManifestWorkName", manifestWorkName, "VolumeReplicationClassName", vrc.Name)
+		logger.Info(
+			"ManifestWork created/updated successfully",
+			"ManifestWorkName",
+			manifestWorkName,
+			"VolumeReplicationClassName",
+			vrc.Name,
+		)
 
 		vgrcmw := workv1.ManifestWork{
 			ObjectMeta: metav1.ObjectMeta{
@@ -374,13 +412,18 @@ func (r *DRPolicyReconciler) createOrUpdateManifestWorkForVRCAndVGRC(ctx context
 			}
 			return nil
 		})
-
 		if err != nil {
 			logger.Error("Failed to create/update ManifestWork", "ManifestWorkName", vgrcManifestWorkName, "error", err)
 			return err
 		}
 
-		logger.Info("ManifestWork created/updated successfully", "ManifestWorkName", vgrcManifestWorkName, "VolumeGroupReplicationClassName", vgrc.Name)
+		logger.Info(
+			"ManifestWork created/updated successfully",
+			"ManifestWorkName",
+			vgrcManifestWorkName,
+			"VolumeGroupReplicationClassName",
+			vgrc.Name,
+		)
 	}
 
 	return nil
@@ -420,7 +463,10 @@ func getTemplateForVRC(vrc replicationv1alpha1.VolumeReplicationClass, templateN
 	return vrcTemplateJson, nil
 }
 
-func getTemplateForVGRC(vgrc replicationv1alpha1.VolumeGroupReplicationClass, vgrcName, templateNamespace string) ([]byte, error) {
+func getTemplateForVGRC(
+	vgrc replicationv1alpha1.VolumeGroupReplicationClass,
+	vgrcName, templateNamespace string,
+) ([]byte, error) {
 	vgrc.Name = vgrcName
 	vgrcJson, err := json.Marshal(vgrc)
 	if err != nil {
@@ -455,15 +501,21 @@ func getTemplateForVGRC(vgrc replicationv1alpha1.VolumeGroupReplicationClass, vg
 	return vgrcTemplateJson, nil
 }
 
-func getMirrorPeerForClusterSet(ctx context.Context, client client.Client, clusterSet []string) (*multiclusterv1alpha1.MirrorPeer, error) {
-
+func getMirrorPeerForClusterSet(
+	ctx context.Context,
+	client client.Client,
+	clusterSet []string,
+) (*multiclusterv1alpha1.MirrorPeer, error) {
 	var mpList multiclusterv1alpha1.MirrorPeerList
 	if err := client.List(ctx, &mpList); err != nil {
 		return nil, err
 	}
 
 	if len(mpList.Items) == 0 {
-		return nil, k8serrors.NewNotFound(schema.GroupResource{Group: multiclusterv1alpha1.GroupVersion.Group, Resource: "MirrorPeer"}, "MirrorPeerList")
+		return nil, k8serrors.NewNotFound(
+			schema.GroupResource{Group: multiclusterv1alpha1.GroupVersion.Group, Resource: "MirrorPeer"},
+			"MirrorPeerList",
+		)
 	}
 
 	for _, mp := range mpList.Items {
@@ -473,5 +525,8 @@ func getMirrorPeerForClusterSet(ctx context.Context, client client.Client, clust
 		}
 	}
 
-	return nil, k8serrors.NewNotFound(schema.GroupResource{Group: multiclusterv1alpha1.GroupVersion.Group, Resource: "MirrorPeer"}, fmt.Sprintf("ClusterSet-%s-%s", clusterSet[0], clusterSet[1]))
+	return nil, k8serrors.NewNotFound(
+		schema.GroupResource{Group: multiclusterv1alpha1.GroupVersion.Group, Resource: "MirrorPeer"},
+		fmt.Sprintf("ClusterSet-%s-%s", clusterSet[0], clusterSet[1]),
+	)
 }

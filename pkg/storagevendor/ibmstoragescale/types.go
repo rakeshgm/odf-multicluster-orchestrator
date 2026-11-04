@@ -18,10 +18,10 @@ package ibmstoragescale
 
 // IbmStorageScaleInfo represents the replication information from IBM Storage Scale ConfigMap
 type IbmStorageScaleInfo struct {
-	Version           string   `yaml:"version" json:"version"`
+	Version           string   `yaml:"version"            json:"version"`
 	OperatorNamespace string   `yaml:"operator-namespace" json:"operatorNamespace"`
-	Cluster           Cluster  `yaml:"cluster" json:"cluster"`
-	SourceManifests   []string `yaml:"sourceManifests" json:"sourceManifests"`
+	Cluster           Cluster  `yaml:"cluster"            json:"cluster"`
+	SourceManifests   []string `yaml:"sourceManifests"    json:"sourceManifests"`
 }
 
 type Cluster struct {

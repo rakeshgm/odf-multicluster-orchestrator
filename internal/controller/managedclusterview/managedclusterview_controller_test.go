@@ -121,7 +121,11 @@ storageCluster:
 		assert.NoError(t, err)
 
 		cm := &corev1.ConfigMap{}
-		err = c.Get(ctx, types.NamespacedName{Name: odf.ClientInfoConfigMapName, Namespace: utils.GetEnv("POD_NAMESPACE")}, cm)
+		err = c.Get(
+			ctx,
+			types.NamespacedName{Name: odf.ClientInfoConfigMapName, Namespace: utils.GetEnv("POD_NAMESPACE")},
+			cm,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, cm)
 
@@ -179,7 +183,11 @@ storageCluster:
 		assert.NoError(t, err)
 
 		cm := &corev1.ConfigMap{}
-		err = c.Get(ctx, types.NamespacedName{Name: odf.ClientInfoConfigMapName, Namespace: utils.GetEnv("POD_NAMESPACE")}, cm)
+		err = c.Get(
+			ctx,
+			types.NamespacedName{Name: odf.ClientInfoConfigMapName, Namespace: utils.GetEnv("POD_NAMESPACE")},
+			cm,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, cm)
 
@@ -259,7 +267,12 @@ sourceManifests:
 		ownerRefs := []metav1.OwnerReference{
 			*metav1.NewControllerRef(mc1, clusterv1.SchemeGroupVersion.WithKind("ManagedCluster")),
 		}
-		mcv := createManagedClusterView("scale-multicluster-mcv-ibmstoragescale-test-view", "ibmstoragescale-cluster1", data, ownerRefs)
+		mcv := createManagedClusterView(
+			"scale-multicluster-mcv-ibmstoragescale-test-view",
+			"ibmstoragescale-cluster1",
+			data,
+			ownerRefs,
+		)
 
 		ctx := context.TODO()
 		err = c.Create(ctx, mcv)
@@ -269,7 +282,11 @@ sourceManifests:
 		assert.NoError(t, err)
 
 		cm := &corev1.ConfigMap{}
-		err = c.Get(ctx, types.NamespacedName{Name: "ibm-storage-scale-info", Namespace: utils.GetEnv("POD_NAMESPACE")}, cm)
+		err = c.Get(
+			ctx,
+			types.NamespacedName{Name: "ibm-storage-scale-info", Namespace: utils.GetEnv("POD_NAMESPACE")},
+			cm,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, cm)
 
@@ -321,7 +338,12 @@ sourceManifests:
 		ownerRefs := []metav1.OwnerReference{
 			*metav1.NewControllerRef(mc2, clusterv1.SchemeGroupVersion.WithKind("ManagedCluster")),
 		}
-		mcv := createManagedClusterView("scale-multicluster-mcv-ibmstoragescale-new-view", "ibmstoragescale-cluster2", data, ownerRefs)
+		mcv := createManagedClusterView(
+			"scale-multicluster-mcv-ibmstoragescale-new-view",
+			"ibmstoragescale-cluster2",
+			data,
+			ownerRefs,
+		)
 
 		err = c.Create(ctx, mcv)
 		assert.NoError(t, err)
@@ -330,7 +352,11 @@ sourceManifests:
 		assert.NoError(t, err)
 
 		cm := &corev1.ConfigMap{}
-		err = c.Get(ctx, types.NamespacedName{Name: "ibm-storage-scale-info", Namespace: utils.GetEnv("POD_NAMESPACE")}, cm)
+		err = c.Get(
+			ctx,
+			types.NamespacedName{Name: "ibm-storage-scale-info", Namespace: utils.GetEnv("POD_NAMESPACE")},
+			cm,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, cm)
 

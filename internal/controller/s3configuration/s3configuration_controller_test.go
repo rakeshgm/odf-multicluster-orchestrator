@@ -19,17 +19,16 @@ package s3configuration
 import (
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"os"
 	"strings"
 	"testing"
 
-	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	obv1alpha1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	rmn "github.com/ramendr/ramen/api/v1alpha1"
+	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -469,7 +468,10 @@ func TestEnsureRamenSecret(t *testing.T) {
 		t.Errorf("Ramen secret AWS_ACCESS_KEY_ID incorrect. Got: %s", string(ramenSecret.Data[utils.AwsAccessKeyId]))
 	}
 	if string(ramenSecret.Data[utils.AwsSecretAccessKey]) != "secret-key" {
-		t.Errorf("Ramen secret AWS_SECRET_ACCESS_KEY incorrect. Got: %s", string(ramenSecret.Data[utils.AwsSecretAccessKey]))
+		t.Errorf(
+			"Ramen secret AWS_SECRET_ACCESS_KEY incorrect. Got: %s",
+			string(ramenSecret.Data[utils.AwsSecretAccessKey]),
+		)
 	}
 
 	// Verify labels and annotations
@@ -512,7 +514,11 @@ func TestEnsureDRClusters(t *testing.T) {
 		}
 
 		if drCluster.Spec.S3ProfileName != s3Config.Name {
-			t.Errorf("DRCluster S3ProfileName incorrect. Got: %s, Want: %s", drCluster.Spec.S3ProfileName, s3Config.Name)
+			t.Errorf(
+				"DRCluster S3ProfileName incorrect. Got: %s, Want: %s",
+				drCluster.Spec.S3ProfileName,
+				s3Config.Name,
+			)
 		}
 	}
 }
@@ -642,7 +648,9 @@ func TestValidateManagedClustersUniqueness_ConflictWithOtherS3Config(t *testing.
 
 	err := r.validateManagedClustersUniqueness(ctx, logger, newS3Config)
 	if err == nil {
-		t.Error("validateManagedClustersUniqueness() should return error when cluster is used by another S3Configuration")
+		t.Error(
+			"validateManagedClustersUniqueness() should return error when cluster is used by another S3Configuration",
+		)
 	}
 	if err != nil && !strings.Contains(err.Error(), "cluster2") {
 		t.Errorf("Error message should mention conflicting cluster. Got: %s", err.Error())
@@ -753,7 +761,10 @@ func TestValidateNoDRPolicyUsesClusters_PolicyUsesNoOverlappingClusters(t *testi
 
 	err := r.validateNoDRPolicyUsesClusters(ctx, logger, s3Config)
 	if err != nil {
-		t.Errorf("validateNoDRPolicyUsesClusters() should not error when DRPolicy uses different clusters. Error: %s", err)
+		t.Errorf(
+			"validateNoDRPolicyUsesClusters() should not error when DRPolicy uses different clusters. Error: %s",
+			err,
+		)
 	}
 }
 

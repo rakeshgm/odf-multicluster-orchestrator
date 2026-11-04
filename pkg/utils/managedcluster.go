@@ -48,13 +48,20 @@ func GetManagedClusterById(ctx context.Context, c client.Client, clusterId strin
 }
 
 // GetNamespacedNameFromClusterClaim extracts a namespaced name from a specific ClusterClaim
-func GetNamespacedNameFromClusterClaim(managedCluster *clusterv1.ManagedCluster, claimName string) (types.NamespacedName, error) {
+func GetNamespacedNameFromClusterClaim(
+	managedCluster *clusterv1.ManagedCluster,
+	claimName string,
+) (types.NamespacedName, error) {
 	clusterClaims := managedCluster.Status.ClusterClaims
 	for _, claim := range clusterClaims {
 		if claim.Name == claimName {
 			namespacedName := strings.Split(claim.Value, "/")
 			if len(namespacedName) != 2 {
-				return types.NamespacedName{}, fmt.Errorf("invalid format for namespaced name claim %q: expected 'namespace/name', got '%s'", claimName, claim.Value)
+				return types.NamespacedName{}, fmt.Errorf(
+					"invalid format for namespaced name claim %q: expected 'namespace/name', got '%s'",
+					claimName,
+					claim.Value,
+				)
 			}
 			return types.NamespacedName{Namespace: namespacedName[0], Name: namespacedName[1]}, nil
 		}

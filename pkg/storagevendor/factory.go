@@ -19,17 +19,23 @@ package storagevendor
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/storagevendor/odf"
-
 	"k8s.io/apimachinery/pkg/runtime"
-	"log/slog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // New returns the appropriate storage vendor implementation
-func New(ctx context.Context, cl client.Client, scheme *runtime.Scheme, logger *slog.Logger, currentNamespace string, vendorType multiclusterv1alpha1.VendorType) (StorageVendor, error) {
+func New(
+	ctx context.Context,
+	cl client.Client,
+	scheme *runtime.Scheme,
+	logger *slog.Logger,
+	currentNamespace string,
+	vendorType multiclusterv1alpha1.VendorType,
+) (StorageVendor, error) {
 	switch vendorType {
 	case multiclusterv1alpha1.ODF:
 		return odf.NewODFVendor(ctx, cl, scheme, logger, currentNamespace)

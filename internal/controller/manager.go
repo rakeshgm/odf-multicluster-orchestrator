@@ -5,6 +5,12 @@ import (
 	"crypto/tls"
 	"os"
 
+	argov1alpha1 "github.com/argoproj/argo-cd/v3/pkg/apis/application/v1alpha1"
+	"github.com/go-logr/zapr"
+	configv1 "github.com/openshift/api/config/v1"
+	consolev1 "github.com/openshift/api/console/v1"
+	ramenv1alpha1 "github.com/ramendr/ramen/api/v1alpha1"
+	ocstlsv1 "github.com/red-hat-storage/ocs-tls-profiles/api/v1"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/addons/s3config"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/addons/tokenexchange"
 	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
@@ -18,13 +24,6 @@ import (
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/internal/controller/s3configuration"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	"github.com/red-hat-storage/odf-multicluster-orchestrator/version"
-
-	argov1alpha1 "github.com/argoproj/argo-cd/v3/pkg/apis/application/v1alpha1"
-	"github.com/go-logr/zapr"
-	configv1 "github.com/openshift/api/config/v1"
-	consolev1 "github.com/openshift/api/console/v1"
-	ramenv1alpha1 "github.com/ramendr/ramen/api/v1alpha1"
-	ocstlsv1 "github.com/red-hat-storage/ocs-tls-profiles/api/v1"
 	"github.com/spf13/cobra"
 	viewv1beta1 "github.com/stolostron/multicloud-operators-foundation/pkg/apis/view/v1beta1"
 	"golang.org/x/sync/errgroup"
@@ -50,9 +49,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
-var (
-	mgrScheme = runtime.NewScheme()
-)
+var mgrScheme = runtime.NewScheme()
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(mgrScheme))
@@ -99,7 +96,12 @@ func (o *ManagerOptions) AddFlags(cmd *cobra.Command) {
 	flags.BoolVar(&o.SecureMetrics, "metrics-secure", true,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flags.StringVar(&o.ProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flags.IntVar(&o.MulticlusterConsolePort, "multicluster-console-port", 9001, "The port where the multicluster console server will be serving its payload")
+	flags.IntVar(
+		&o.MulticlusterConsolePort,
+		"multicluster-console-port",
+		9001,
+		"The port where the multicluster console server will be serving its payload",
+	)
 	flags.BoolVar(&o.EnableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -217,7 +219,9 @@ func (o *ManagerOptions) runManager(ctx context.Context) {
 			},
 			// Only cache ManagedClusterViews created by this controller
 			&viewv1beta1.ManagedClusterView{}: {
-				Label: labels.SelectorFromSet(labels.Set{utils.CreatedByLabelKey: "odf-multicluster-managedcluster-controller"}),
+				Label: labels.SelectorFromSet(
+					labels.Set{utils.CreatedByLabelKey: "odf-multicluster-managedcluster-controller"},
+				),
 			},
 			// Only cache the specific TLSProfile resource we monitor
 			&ocstlsv1.TLSProfile{}: {
@@ -241,7 +245,8 @@ func (o *ManagerOptions) runManager(ctx context.Context) {
 			},
 			// Only cache ManifestWorks created by this operator to reduce memory usage.
 			// Only cache ManifestWorks labeled with "multicluster.odf.openshift.io/created-by".
-			// NOTE: Enable it in future release, such that upgraded clusters already have the label added to the ManifestWork created by MCO
+			// NOTE: Enable it in future release, such that upgraded clusters already have the label added to the
+			// ManifestWork created by MCO
 			// &workv1.ManifestWork{}: {
 			// 	Label: createByMCOLabelSelector,
 			// },

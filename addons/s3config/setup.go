@@ -53,7 +53,10 @@ type S3ConfigAddons struct {
 }
 
 // Manifests generates manifestworks to deploy the s3config addon agent on the managed cluster
-func (a *S3ConfigAddons) Manifests(cluster *clusterv1.ManagedCluster, addon *addonapiv1alpha1.ManagedClusterAddOn) ([]runtime.Object, error) {
+func (a *S3ConfigAddons) Manifests(
+	cluster *clusterv1.ManagedCluster,
+	addon *addonapiv1alpha1.ManagedClusterAddOn,
+) ([]runtime.Object, error) {
 	objects := []runtime.Object{}
 
 	installNamespace := addon.Spec.InstallNamespace
@@ -113,7 +116,11 @@ func (a *S3ConfigAddons) GetAgentAddonOptions() agent.AgentAddonOptions {
 }
 
 // csrApproveCheck checks the addon agent csr
-func (a *S3ConfigAddons) csrApproveCheck(cluster *clusterv1.ManagedCluster, addon *addonapiv1alpha1.ManagedClusterAddOn, csr *certificatesv1.CertificateSigningRequest) bool {
+func (a *S3ConfigAddons) csrApproveCheck(
+	cluster *clusterv1.ManagedCluster,
+	addon *addonapiv1alpha1.ManagedClusterAddOn,
+	csr *certificatesv1.CertificateSigningRequest,
+) bool {
 	groups := agent.DefaultGroups(cluster.Name, a.AddonName)
 	clusterAddOnGroup := groups[0]
 	addOnGroup := groups[1]
@@ -143,7 +150,8 @@ func (a *S3ConfigAddons) csrApproveCheck(cluster *clusterv1.ManagedCluster, addo
 		return false
 	}
 
-	if !requestingOrgs.Has(authenticatedGroup) || !requestingOrgs.Has(addOnGroup) || !requestingOrgs.Has(clusterAddOnGroup) {
+	if !requestingOrgs.Has(authenticatedGroup) || !requestingOrgs.Has(addOnGroup) ||
+		!requestingOrgs.Has(clusterAddOnGroup) {
 		klog.V(4).Infof("csr %q was not recognized: missing required groups", csr.Name)
 		return false
 	}
@@ -152,7 +160,10 @@ func (a *S3ConfigAddons) csrApproveCheck(cluster *clusterv1.ManagedCluster, addo
 }
 
 // permissionConfig generates RBAC permissions for s3config addon agent on hub
-func (a *S3ConfigAddons) permissionConfig(cluster *clusterv1.ManagedCluster, addon *addonapiv1alpha1.ManagedClusterAddOn) error {
+func (a *S3ConfigAddons) permissionConfig(
+	cluster *clusterv1.ManagedCluster,
+	addon *addonapiv1alpha1.ManagedClusterAddOn,
+) error {
 	groups := agent.DefaultGroups(cluster.Name, a.AddonName)
 	user := agent.DefaultUser(cluster.Name, a.AddonName, a.AddonName)
 	clusterName := cluster.Name

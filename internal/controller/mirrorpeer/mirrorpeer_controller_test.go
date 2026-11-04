@@ -96,7 +96,12 @@ func TestMirrorPeerReconcilerReconcile(t *testing.T) {
 	}
 
 	if val, ok := mp.Labels[utils.HubRecoveryLabel]; !ok || val != "resource" {
-		t.Errorf("MirrorPeer.Labels[%s] is not set correctly. Expected: %s, Actual: %s", utils.HubRecoveryLabel, "resource", val)
+		t.Errorf(
+			"MirrorPeer.Labels[%s] is not set correctly. Expected: %s, Actual: %s",
+			utils.HubRecoveryLabel,
+			"resource",
+			val,
+		)
 	}
 }
 
@@ -173,7 +178,10 @@ func makeClientInfoJSON(clientID, providerManagedCluster, namespace string) stri
 	return string(b)
 }
 
-func makeManagedClusterAddOn(mp *multiclusterv1alpha1.MirrorPeer, namespace string) *addonapiv1alpha1.ManagedClusterAddOn {
+func makeManagedClusterAddOn(
+	mp *multiclusterv1alpha1.MirrorPeer,
+	namespace string,
+) *addonapiv1alpha1.ManagedClusterAddOn {
 	addon := &addonapiv1alpha1.ManagedClusterAddOn{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      utils.TokenExchangeName,
@@ -265,8 +273,20 @@ func TestDeleteMirrorPeer(t *testing.T) {
 				Type:     multiclusterv1alpha1.Async,
 				ManageS3: true,
 				Items: []multiclusterv1alpha1.PeerRef{
-					{ClusterName: "cluster1", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster", Namespace: "test-namespace"}},
-					{ClusterName: "cluster2", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster", Namespace: "test-namespace"}},
+					{
+						ClusterName: "cluster1",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{
+							Name:      "test-storagecluster",
+							Namespace: "test-namespace",
+						},
+					},
+					{
+						ClusterName: "cluster2",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{
+							Name:      "test-storagecluster",
+							Namespace: "test-namespace",
+						},
+					},
 				},
 			},
 		}
@@ -511,8 +531,20 @@ func TestDeleteMirrorPeerE2EFlow(t *testing.T) {
 			Spec: multiclusterv1alpha1.MirrorPeerSpec{
 				Type: multiclusterv1alpha1.Async,
 				Items: []multiclusterv1alpha1.PeerRef{
-					{ClusterName: "cluster1", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster", Namespace: "test-namespace"}},
-					{ClusterName: "cluster2", StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{Name: "test-storagecluster", Namespace: "test-namespace"}},
+					{
+						ClusterName: "cluster1",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{
+							Name:      "test-storagecluster",
+							Namespace: "test-namespace",
+						},
+					},
+					{
+						ClusterName: "cluster2",
+						StorageClusterRef: multiclusterv1alpha1.StorageClusterRef{
+							Name:      "test-storagecluster",
+							Namespace: "test-namespace",
+						},
+					},
 				},
 			},
 		}
@@ -543,7 +575,13 @@ func TestDeleteMirrorPeerE2EFlow(t *testing.T) {
 			WithStatusSubresource(mp).
 			Build()
 
-		vendor, err := odf.NewODFVendor(ctx, fakeClient, scheme, utils.GetLogger(utils.GetZapLogger(true)), utils.GetEnv("POD_NAMESPACE"))
+		vendor, err := odf.NewODFVendor(
+			ctx,
+			fakeClient,
+			scheme,
+			utils.GetLogger(utils.GetZapLogger(true)),
+			utils.GetEnv("POD_NAMESPACE"),
+		)
 		if err != nil {
 			t.Fatalf("Failed to create ODF vendor: %v", err)
 		}

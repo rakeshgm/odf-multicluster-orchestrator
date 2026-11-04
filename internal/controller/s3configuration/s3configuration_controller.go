@@ -23,11 +23,10 @@ import (
 	"log/slog"
 	"time"
 
-	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
-
 	obv1alpha1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	rmn "github.com/ramendr/ramen/api/v1alpha1"
+	multiclusterv1alpha1 "github.com/red-hat-storage/odf-multicluster-orchestrator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-multicluster-orchestrator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,7 +102,10 @@ func (r *S3ConfigurationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // findS3ConfigForSecret finds S3Configurations that should be reconciled when a secret changes
-func (r *S3ConfigurationReconciler) findS3ConfigForSecret(ctx context.Context, secret client.Object) []reconcile.Request {
+func (r *S3ConfigurationReconciler) findS3ConfigForSecret(
+	ctx context.Context,
+	secret client.Object,
+) []reconcile.Request {
 	// Get the secret's namespace - this should be a managed cluster namespace
 	clusterNamespace := secret.GetNamespace()
 
@@ -130,7 +132,10 @@ func (r *S3ConfigurationReconciler) findS3ConfigForSecret(ctx context.Context, s
 }
 
 // findS3ConfigsForRamenConfigMap finds all S3Configurations when Ramen ConfigMap changes
-func (r *S3ConfigurationReconciler) findS3ConfigsForRamenConfigMap(ctx context.Context, configMap client.Object) []reconcile.Request {
+func (r *S3ConfigurationReconciler) findS3ConfigsForRamenConfigMap(
+	ctx context.Context,
+	configMap client.Object,
+) []reconcile.Request {
 	// List all S3Configurations
 	s3ConfigList := &multiclusterv1alpha1.S3ConfigurationList{}
 	if err := r.List(ctx, s3ConfigList); err != nil {
@@ -151,7 +156,10 @@ func (r *S3ConfigurationReconciler) findS3ConfigsForRamenConfigMap(ctx context.C
 }
 
 // findS3ConfigsForDRPolicy finds S3Configurations that should be reconciled when DRPolicy changes
-func (r *S3ConfigurationReconciler) findS3ConfigsForDRPolicy(ctx context.Context, drPolicy client.Object) []reconcile.Request {
+func (r *S3ConfigurationReconciler) findS3ConfigsForDRPolicy(
+	ctx context.Context,
+	drPolicy client.Object,
+) []reconcile.Request {
 	policy, ok := drPolicy.(*rmn.DRPolicy)
 	if !ok {
 		return []reconcile.Request{}
@@ -232,8 +240,11 @@ func (r *S3ConfigurationReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	return result, nil
 }
 
-func (r *S3ConfigurationReconciler) reconcilePhases(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration) (reconcile.Result, error) {
-
+func (r *S3ConfigurationReconciler) reconcilePhases(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+) (reconcile.Result, error) {
 	if !s3Config.DeletionTimestamp.IsZero() {
 		return r.deletionPhase(ctx, logger, s3Config)
 	}
@@ -330,7 +341,11 @@ func (r *S3ConfigurationReconciler) reconcilePhases(ctx context.Context, logger 
 }
 
 // deletionPhase handles cleanup when S3Configuration is being deleted
-func (r *S3ConfigurationReconciler) deletionPhase(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration) (ctrl.Result, error) {
+func (r *S3ConfigurationReconciler) deletionPhase(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+) (ctrl.Result, error) {
 	logger.Info("Handling deletion of S3Configuration")
 
 	if controllerutil.ContainsFinalizer(s3Config, S3ConfigurationFinalizer) {
@@ -360,7 +375,13 @@ func (r *S3ConfigurationReconciler) deletionPhase(ctx context.Context, logger *s
 			mw.Namespace = providerCluster
 			if err := r.Get(ctx, client.ObjectKeyFromObject(mw), mw); err == nil {
 				// ManifestWork exists, delete it and wait for completion
-				logger.Info("Deleting ManifestWork to trigger OBC cleanup", "manifestWork", manifestWorkName, "cluster", providerCluster)
+				logger.Info(
+					"Deleting ManifestWork to trigger OBC cleanup",
+					"manifestWork",
+					manifestWorkName,
+					"cluster",
+					providerCluster,
+				)
 				if err := r.Delete(ctx, mw); err != nil {
 					logger.Error("Failed to delete ManifestWork", "error", err)
 					return ctrl.Result{}, err
@@ -397,7 +418,11 @@ func (r *S3ConfigurationReconciler) deletionPhase(ctx context.Context, logger *s
 }
 
 // reconcileInternalS3Type handles ODF-managed internal S3
-func (r *S3ConfigurationReconciler) reconcileInternalS3Type(ctx context.Context, s3Config *multiclusterv1alpha1.S3Configuration, logger *slog.Logger) (ctrl.Result, error) {
+func (r *S3ConfigurationReconciler) reconcileInternalS3Type(
+	ctx context.Context,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+	logger *slog.Logger,
+) (ctrl.Result, error) {
 	logger.Info("Reconciling InternalS3 configuration")
 
 	s3Config.Status.Phase = multiclusterv1alpha1.S3ConfigurationPhaseConfiguring
@@ -423,7 +448,11 @@ func (r *S3ConfigurationReconciler) reconcileInternalS3Type(ctx context.Context,
 }
 
 // ensureManagedClusterAddOn ensures the S3Config addon is deployed on the provider cluster
-func (r *S3ConfigurationReconciler) ensureManagedClusterAddOn(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration) error {
+func (r *S3ConfigurationReconciler) ensureManagedClusterAddOn(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+) error {
 	providerCluster := s3Config.Spec.InternalS3.ProviderCluster
 	logger.Info("Ensuring S3Config addon", "cluster", providerCluster)
 
@@ -468,13 +497,25 @@ func (r *S3ConfigurationReconciler) ensureManagedClusterAddOn(ctx context.Contex
 }
 
 // ensureOBCManifestWork creates ManifestWork to deploy OBC on the spoke cluster
-func (r *S3ConfigurationReconciler) ensureOBCManifestWork(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration) (bool, error) {
+func (r *S3ConfigurationReconciler) ensureOBCManifestWork(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+) (bool, error) {
 	obcName := getOBCName(s3Config)
 	providerCluster := s3Config.Spec.InternalS3.ProviderCluster
 	namespace := s3Config.Spec.InternalS3.Namespace
 	storageClassName := s3Config.Spec.InternalS3.StorageClassName
 
-	logger.Info("Ensuring OBC ManifestWork", "obcName", obcName, "providerCluster", providerCluster, "namespace", namespace)
+	logger.Info(
+		"Ensuring OBC ManifestWork",
+		"obcName",
+		obcName,
+		"providerCluster",
+		providerCluster,
+		"namespace",
+		namespace,
+	)
 
 	// Create OBC resource with proper TypeMeta for ManifestWork
 	obc := &obv1alpha1.ObjectBucketClaim{
@@ -545,7 +586,11 @@ func (r *S3ConfigurationReconciler) ensureOBCManifestWork(ctx context.Context, l
 }
 
 // waitForInternalSecret waits for the addon to sync the secret from spoke to hub
-func (r *S3ConfigurationReconciler) validateSecret(ctx context.Context, logger *slog.Logger, secret *corev1.Secret) error {
+func (r *S3ConfigurationReconciler) validateSecret(
+	ctx context.Context,
+	logger *slog.Logger,
+	secret *corev1.Secret,
+) error {
 	if err := r.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
 		logger.Error("Failed to get secret", "secret", client.ObjectKeyFromObject(secret), "error", err)
 		return err
@@ -572,8 +617,19 @@ func (r *S3ConfigurationReconciler) validateSecret(ctx context.Context, logger *
 }
 
 // ensureRamenSecret copies the S3 credentials to Ramen namespace
-func (r *S3ConfigurationReconciler) ensureRamenSecret(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration, secret *corev1.Secret) error {
-	logger.Info("Copying S3 credentials to Ramen namespace", "sourceSecret", client.ObjectKeyFromObject(secret), "targetNamespace", r.CurrentNamespace)
+func (r *S3ConfigurationReconciler) ensureRamenSecret(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+	secret *corev1.Secret,
+) error {
+	logger.Info(
+		"Copying S3 credentials to Ramen namespace",
+		"sourceSecret",
+		client.ObjectKeyFromObject(secret),
+		"targetNamespace",
+		r.CurrentNamespace,
+	)
 
 	ramenSecret := &corev1.Secret{}
 	ramenSecret.Name = s3Config.Name
@@ -596,12 +652,23 @@ func (r *S3ConfigurationReconciler) ensureRamenSecret(ctx context.Context, logge
 		return err
 	}
 
-	logger.Info("Successfully copied secret to Ramen namespace", "secretName", s3Config.Name, "namespace", r.CurrentNamespace)
+	logger.Info(
+		"Successfully copied secret to Ramen namespace",
+		"secretName",
+		s3Config.Name,
+		"namespace",
+		r.CurrentNamespace,
+	)
 	return nil
 }
 
 // addS3ProfileToRamenConfig updates the Ramen ConfigMap with S3 profile
-func (r *S3ConfigurationReconciler) addS3ProfileToRamenConfig(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration, secret *corev1.Secret) error {
+func (r *S3ConfigurationReconciler) addS3ProfileToRamenConfig(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+	secret *corev1.Secret,
+) error {
 	return utils.UpdateRamenConfigForS3Configuration(
 		ctx,
 		r.Client,
@@ -615,7 +682,11 @@ func (r *S3ConfigurationReconciler) addS3ProfileToRamenConfig(ctx context.Contex
 }
 
 // ensureDrClusters creates DRCluster resources for each managed cluster
-func (r *S3ConfigurationReconciler) ensureDrClusters(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration) error {
+func (r *S3ConfigurationReconciler) ensureDrClusters(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+) error {
 	logger.Info("Creating DRClusters for managed clusters", "managedClusters", s3Config.Spec.ManagedClusters)
 
 	for _, clusterName := range s3Config.Spec.ManagedClusters {
@@ -633,7 +704,13 @@ func (r *S3ConfigurationReconciler) ensureDrClusters(ctx context.Context, logger
 			return err
 		}
 
-		logger.Info("DRCluster created/updated successfully", "clusterName", clusterName, "s3ProfileName", s3Config.Name)
+		logger.Info(
+			"DRCluster created/updated successfully",
+			"clusterName",
+			clusterName,
+			"s3ProfileName",
+			s3Config.Name,
+		)
 	}
 
 	logger.Info("All DRClusters created/updated successfully")
@@ -649,7 +726,11 @@ func getOBCName(s3Config *multiclusterv1alpha1.S3Configuration) string {
 }
 
 // validateNoDRPolicyUsesClusters checks if any DRPolicy is using the clusters from this S3Configuration
-func (r *S3ConfigurationReconciler) validateNoDRPolicyUsesClusters(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration) error {
+func (r *S3ConfigurationReconciler) validateNoDRPolicyUsesClusters(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+) error {
 	logger.Info("Checking if any DRPolicy uses the managedClusters")
 
 	// List all DRPolicies
@@ -664,7 +745,11 @@ func (r *S3ConfigurationReconciler) validateNoDRPolicyUsesClusters(ctx context.C
 		for _, drCluster := range drPolicy.Spec.DRClusters {
 			for _, managedCluster := range s3Config.Spec.ManagedClusters {
 				if drCluster == managedCluster {
-					return fmt.Errorf("cannot delete S3Configuration: cluster %q is being used by DRPolicy %q", managedCluster, drPolicy.Name)
+					return fmt.Errorf(
+						"cannot delete S3Configuration: cluster %q is being used by DRPolicy %q",
+						managedCluster,
+						drPolicy.Name,
+					)
 				}
 			}
 		}
@@ -675,7 +760,11 @@ func (r *S3ConfigurationReconciler) validateNoDRPolicyUsesClusters(ctx context.C
 }
 
 // removeS3ProfileFromRamenConfig removes the S3 profile from Ramen ConfigMap
-func (r *S3ConfigurationReconciler) removeS3ProfileFromRamenConfig(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration) error {
+func (r *S3ConfigurationReconciler) removeS3ProfileFromRamenConfig(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+) error {
 	logger.Info("Removing S3 profile from Ramen ConfigMap", "s3ProfileName", s3Config.Name)
 
 	return utils.RemoveS3ProfileFromRamenConfig(
@@ -688,7 +777,12 @@ func (r *S3ConfigurationReconciler) removeS3ProfileFromRamenConfig(ctx context.C
 }
 
 // cleanupManagedClusterAddOn deletes MCA if no other S3Configuration uses this cluster
-func (r *S3ConfigurationReconciler) cleanupManagedClusterAddOn(ctx context.Context, logger *slog.Logger, providerCluster string, currentS3ConfigName string) error {
+func (r *S3ConfigurationReconciler) cleanupManagedClusterAddOn(
+	ctx context.Context,
+	logger *slog.Logger,
+	providerCluster string,
+	currentS3ConfigName string,
+) error {
 	// List all S3Configurations
 	s3ConfigList := &multiclusterv1alpha1.S3ConfigurationList{}
 	if err := r.List(ctx, s3ConfigList); err != nil {
@@ -704,7 +798,13 @@ func (r *S3ConfigurationReconciler) cleanupManagedClusterAddOn(ctx context.Conte
 		}
 		// Check if another S3Config uses the same cluster
 		if s3Config.Spec.InternalS3 != nil && s3Config.Spec.InternalS3.ProviderCluster == providerCluster {
-			logger.Info("ManagedClusterAddOn still in use by another S3Configuration", "cluster", providerCluster, "s3config", s3Config.Name)
+			logger.Info(
+				"ManagedClusterAddOn still in use by another S3Configuration",
+				"cluster",
+				providerCluster,
+				"s3config",
+				s3Config.Name,
+			)
 			return nil
 		}
 	}
@@ -730,7 +830,11 @@ func (r *S3ConfigurationReconciler) cleanupManagedClusterAddOn(ctx context.Conte
 
 // validateManagedClustersUniqueness ensures that each managedCluster is only part of one S3Configuration
 // TODO: Improve validation to allow the oldest S3Configuration (by creation timestamp) and fail newer ones
-func (r *S3ConfigurationReconciler) validateManagedClustersUniqueness(ctx context.Context, logger *slog.Logger, s3Config *multiclusterv1alpha1.S3Configuration) error {
+func (r *S3ConfigurationReconciler) validateManagedClustersUniqueness(
+	ctx context.Context,
+	logger *slog.Logger,
+	s3Config *multiclusterv1alpha1.S3Configuration,
+) error {
 	logger.Info("Validating managedClusters uniqueness")
 
 	// Validate no duplicate clusters within this S3Configuration
@@ -767,12 +871,18 @@ func (r *S3ConfigurationReconciler) validateManagedClustersUniqueness(ctx contex
 	var conflicts []string
 	for _, cluster := range s3Config.Spec.ManagedClusters {
 		if existingConfigName, exists := usedClusters[cluster]; exists {
-			conflicts = append(conflicts, fmt.Sprintf("cluster %q is already managed by S3Configuration %q", cluster, existingConfigName))
+			conflicts = append(
+				conflicts,
+				fmt.Sprintf("cluster %q is already managed by S3Configuration %q", cluster, existingConfigName),
+			)
 		}
 	}
 
 	if len(conflicts) > 0 {
-		return fmt.Errorf("managedCluster conflict detected: %v. Each cluster can only be part of one S3Configuration", conflicts)
+		return fmt.Errorf(
+			"managedCluster conflict detected: %v. Each cluster can only be part of one S3Configuration",
+			conflicts,
+		)
 	}
 
 	logger.Info("ManagedClusters uniqueness validation passed")

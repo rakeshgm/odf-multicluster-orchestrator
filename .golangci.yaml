@@ -6,6 +6,7 @@ linters:
     - ginkgolinter
     - revive
     - sloglint
+    - lll # Line length checker
   settings:
     errcheck:
       check-type-assertions: true
@@ -36,7 +37,16 @@ linters:
         - name: comment-spacings
     staticcheck:
       checks:
-        - '-QF1008'
+        - "-QF1008"
+    lll:
+      line-length: 120
+      tab-width: 1
+    gci:
+      sections:
+        - standard # stdlib packages
+        - default # external packages
+        - prefix(github.com/red-hat-storage/odf-multicluster-orchestrator) # local packages
+      skip-generated: true
   exclusions:
     generated: lax
     presets:
@@ -49,6 +59,9 @@ linters:
       - builtin$
       - examples$
 formatters:
+  enable:
+    - gofumpt # Stricter formatting than gofmt
+    - gci # Import grouping and ordering
   exclusions:
     generated: lax
     paths:
